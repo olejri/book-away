@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { LatestPost } from "~/app/_components/post";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
@@ -61,7 +60,8 @@ export default async function Home() {
             </div>
           </div>
 
-          {session?.user && <LatestPost />}
+          {session?.user && <p>Logged in as {session.user.role}</p>}
+
         </div>
       </main>
     </HydrateClient>

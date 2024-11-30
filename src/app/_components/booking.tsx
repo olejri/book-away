@@ -40,10 +40,10 @@ export function CreateBooking() {
         >
           {createBooking.isPending ? "Submitting..." : "Submit"}
         </button>
-        {pointsSpent ? (
+        {pointsSpent && pointsSpent.length > 0 ? (
           <p className="truncate">Points spent by you: {pointsSpent.map((point) => point.pointsSpent).reduce((a, b) => a + b)}</p>
         ) : (
-          <p>You have no posts yet.</p>
+          <p>You have spent no points yet.</p>
         )}
       </form>
     </div>

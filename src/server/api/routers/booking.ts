@@ -2,7 +2,6 @@ import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { bookings } from "~/server/db/schema";
-import { sql } from "drizzle-orm";
 
 export const bookingRouter = createTRPCRouter({
   getNumberOfPointsSpent: protectedProcedure.query(async ({ ctx }) => {

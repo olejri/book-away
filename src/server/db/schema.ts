@@ -1,12 +1,13 @@
 import { relations, sql } from "drizzle-orm";
 import {
   index,
-  integer,
+  integer, json,
+  pgEnum,
   pgTableCreator,
   primaryKey,
   text,
   timestamp,
-  varchar,
+  varchar
 } from "drizzle-orm/pg-core";
 import { type AdapterAccount } from "next-auth/adapters";
 
@@ -17,6 +18,28 @@ import { type AdapterAccount } from "next-auth/adapters";
  * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
  */
 export const createTable = pgTableCreator((name) => `book-away_${name}`);
+
+export const bookingStatus = pgEnum("booking_status", [
+  "APPLIED",
+  "BOOKED",
+  "CANCELLED",
+]);
+export const seasonStatus = pgEnum("season_status", [
+  "DRAFT",
+  "OPEN",
+  "CLOSED",
+  "DELETED",
+]);
+export const userRole = pgEnum("role", [
+  "USER",
+  "SUPERUSER",
+  "ADMIN"
+]);
+export const weekStatus = pgEnum("week_status", [
+  "FULLY_BOOKABLE",
+  "PARTIALLY_BOOKABLE",
+  "NOT_BOOKABLE",
+]);
 
 export const users = createTable("user", {
   id: varchar("id", { length: 255 })
@@ -30,7 +53,7 @@ export const users = createTable("user", {
     withTimezone: true,
   }).default(sql`CURRENT_TIMESTAMP`),
   image: varchar("image", { length: 255 }),
-  role: varchar("role", { length: 255 }).default("USER"),
+  role: userRole("role").default("USER"),
 });
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -108,8 +131,46 @@ export const verificationTokens = createTable(
   }),
 );
 
-export const bookings = createTable("booking", {
+export const bookings = createTable(
+  "booking",
+  {
+    id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+    weekId: integer("week_id"),
+    from: timestamp("from", {
+      mode: "date",
+      withTimezone: true,
+    }).notNull(),
+    to: timestamp("to", {
+      mode: "date",
+      withTimezone: true,
+    }).notNull(),
+    pointsSpent: integer("points_spent").notNull(),
+    status: bookingStatus("booking_status").default("APPLIED"),
+    createdById: varchar("created_by", { length: 255 })
+      .notNull()
+      .references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(
+      () => new Date(),
+    ),
+  },
+);
+
+export const bookingRelations = relations(bookings, ({ one }) => ({
+  user: one(users, { fields: [bookings.createdById], references: [users.id] }),
+  week: one(weeks, { fields: [bookings.weekId], references: [weeks.id] }),
+}));
+
+export const weeks = createTable("week", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  seasonId: integer("season_id")
+    .notNull()
+    .references(() => seasons.id),
+  weekNumber: integer("week_number").notNull(),
+  notBookableDays: json("not_bookable_days"),
+  weekStatus: weekStatus("week_status").default("FULLY_BOOKABLE").notNull(),
   from: timestamp("from", {
     mode: "date",
     withTimezone: true,
@@ -118,22 +179,41 @@ export const bookings = createTable("booking", {
     mode: "date",
     withTimezone: true,
   }).notNull(),
-  pointsSpent: integer("points_spent").notNull(),
-  createdById: varchar("created_by", { length: 255 })
-    .notNull()
-    .references(() => users.id),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .default(sql`CURRENT_TIMESTAMP`)
-    .notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).default(
+    sql`CURRENT_TIMESTAMP`,
+  ),
   updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(
     () => new Date(),
   ),
-},
-(example) => ({
-  createdByIdIdx: index("created_by_idx").on(example.createdById),
-})
-);
+});
 
-export const bookingRelations = relations(bookings, ({ one }) => ({
-  user: one(users, { fields: [bookings.createdById], references: [users.id] }),
+export const weekRelations = relations(weeks, ({ one }) => ({
+  season: one(seasons, { fields: [weeks.seasonId], references: [seasons.id] }),
+}));
+
+export const seasons = createTable("season", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  name: varchar("name", { length: 255 }),
+  from: timestamp("from", {
+    mode: "date",
+    withTimezone: true,
+  }).notNull(),
+  to: timestamp("to", {
+    mode: "date",
+    withTimezone: true,
+  }).notNull(),
+  seasonStatus: seasonStatus("season_status").default("DRAFT"),
+  createdAt: timestamp("created_at", { withTimezone: true }).default(
+    sql`CURRENT_TIMESTAMP`,
+  ),
+  createdById: varchar("created_by", { length: 255 })
+    .notNull()
+    .references(() => users.id),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(
+    () => new Date(),
+  ),
+});
+
+export const seasonRelations = relations(seasons, ({ one }) => ({
+  user: one(users, { fields: [seasons.createdById], references: [users.id] }),
 }));

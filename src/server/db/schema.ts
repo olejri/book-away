@@ -173,11 +173,11 @@ export const weeks = createTable("week", {
   weekStatus: weekStatus("week_status").default("FULLY_BOOKABLE").notNull(),
   from: timestamp("from", {
     mode: "date",
-    withTimezone: true,
+    withTimezone: false,
   }).notNull(),
   to: timestamp("to", {
     mode: "date",
-    withTimezone: true,
+    withTimezone: false,
   }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).default(
     sql`CURRENT_TIMESTAMP`,

@@ -7,7 +7,7 @@ interface SeasonCardProps {
     name: string | null;
     from: Date;
     to: Date;
-    seasonStatus: "DRAFT" | "OPEN" | "CLOSED" | "DELETED";
+    seasonStatus: "DRAFT" | "OPEN" | "CLOSED" | "DELETED" | null;
     createdById: string;
     createdAt: Date | null;
     updatedAt: Date | null;
@@ -41,7 +41,7 @@ export function SeasonCard({ season }: SeasonCardProps) {
       <div className="flex items-center gap-2">
         <span>Status:</span>
         <select
-          value={season.seasonStatus}
+          value={season.seasonStatus ?? "DRAFT"}
           onChange={(e) =>
             onChangeStatus.mutate({
               seasonId: season.id,

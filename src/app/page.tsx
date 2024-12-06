@@ -3,7 +3,6 @@ import Link from "next/link";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 import { CreateBooking } from "~/app/_components/booking";
-import { CreateSeason } from "~/app/_components/season";
 
 export default async function Home() {
   const session = await auth();
@@ -31,7 +30,6 @@ export default async function Home() {
               </div>
             </div>
             {session?.user && <CreateBooking />}
-            {session?.user && <CreateSeason />}
             {session?.user && <p>Logged in as {session.user.role}</p>}
           </div>
         </div>

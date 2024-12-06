@@ -3,7 +3,7 @@ import { z } from "zod";
 import dayjs from "dayjs";
 import weekOfYear from 'dayjs/plugin/weekOfYear'
 import utc from 'dayjs/plugin/utc'
-import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { adminProcedure, createTRPCRouter } from "~/server/api/trpc";
 import { seasons, weeks } from "~/server/db/schema";
 import { TRPCError } from "@trpc/server";
 
@@ -11,7 +11,7 @@ dayjs.extend(weekOfYear)
 dayjs.extend(utc)
 
 export const seasonRouter = createTRPCRouter({
-  createSeason: protectedProcedure
+  createSeason: adminProcedure
     .input(
       z.object({
         name: z.string(),
@@ -46,7 +46,6 @@ export const seasonRouter = createTRPCRouter({
         const startOfWeek = dayjs(input.from).startOf("week");
         const from = startOfWeek.add(i-1, "week").add(1, "day").toDate();
         const to = dayjs(input.from).startOf("week").add(i-1, "week").add(7,"day").toDate();
-        console.log(startOfWeek.toDate(), from, to);
         weekInputs.push({
           seasonId: seasonId,
           weekNumber: i,

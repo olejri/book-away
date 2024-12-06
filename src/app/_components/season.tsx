@@ -6,7 +6,7 @@ import { useState } from "react";
 import { SeasonCard } from "~/app/_components/seasonCard";
 
 export function CreateSeason() {
-  const [seasons] = api.season.fetchAllSeasonWithStatusDraftOrOpen.useSuspenseQuery();
+  const {data: seasons, isLoading, isError, error} = api.season.fetchAllSeasonWithStatusDraftOrOpen.useQuery();
   const utils = api.useUtils();
 
   const createSeason = api.season.createSeason.useMutation({
@@ -15,10 +15,20 @@ export function CreateSeason() {
     },
   });
 
+
   const [name, setName] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+
+  if (isLoading) {
+    return <p>Loading...</p>;
+  }
+
+  if (isError) {
+    return <p>{error?.message}</p>;
+  }
 
   return (
     <div className="w-full max-w-xs mx-auto p-4">

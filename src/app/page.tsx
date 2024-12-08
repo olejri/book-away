@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
-import { CreateBooking } from "~/app/_components/booking";
+import { UserRole } from "~/server/auth/config";
 
 export default async function Home() {
   const session = await auth();
@@ -29,8 +29,12 @@ export default async function Home() {
                 </Link>
               </div>
             </div>
-            {session?.user && <CreateBooking />}
-            {session?.user && <p>Logged in as {session.user.role}</p>}
+            {/*link to admin/season/create-season*/}
+            {session?.user && session.user.role === UserRole.ADMIN && <Link href="/admin/dashboard/create-season" className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20">Create Season</Link>}
+            {/*link to user*/}
+            {session?.user && <Link href="/user" className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20">My profile</Link>}
+            {/*link to book*/}
+            {session?.user && <Link href="/book" className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20">Book</Link>}
           </div>
         </div>
       </main>

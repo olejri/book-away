@@ -31,7 +31,7 @@ export function CreateSeason() {
   }
 
   return (
-    <div className="w-full max-w-xs mx-auto p-4">
+    <div className="w-full max-w-xs mx-auto p-4 text-black">
       {/* Trigger button for the modal */}
       <button
         className="rounded-full bg-blue-500 text-white px-5 py-2 font-semibold transition hover:bg-blue-600"

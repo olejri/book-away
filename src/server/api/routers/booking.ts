@@ -5,23 +5,22 @@ import { bookings } from "~/server/db/schema";
 
 export const bookingRouter = createTRPCRouter({
   getNumberOfPointsSpent: protectedProcedure.query(async ({ ctx }) => {
-    const result = await ctx.db.select().from(bookings)
-    return result
+    return await ctx.db.select().from(bookings);
   }),
 
   createBooking: protectedProcedure
     .input(
       z.object({
-        from: z.date(),
-        to: z.date(),
+        weekId: z.number(),
         pointsSpent: z.number(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
       await ctx.db.insert(bookings).values({
-        from: input.from,
-        to: input.to,
+        weekId: input.weekId,
         pointsSpent: input.pointsSpent,
+        from: new Date(),
+        to: new Date(),
         createdById: ctx.session.user.id,
       });
     }),

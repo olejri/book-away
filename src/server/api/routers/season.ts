@@ -106,6 +106,15 @@ export const seasonRouter = createTRPCRouter({
       await ctx.db.delete(weeks).where(eq(weeks.seasonId, input.seasonId));
       await ctx.db.delete(seasons).where(eq(seasons.id, input.seasonId));
     }),
+
+  fetchAllOpenSeasons: adminProcedure.query(async ({ ctx }) => {
+    return await ctx.db
+      .select()
+      .from(seasons)
+      .where(
+        eq(seasons.seasonStatus, "OPEN"),
+      );
+  }),
 });
 
 export type WeekInput = {

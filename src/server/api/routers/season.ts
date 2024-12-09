@@ -3,10 +3,10 @@ import { z } from "zod";
 import dayjs from "dayjs";
 import weekOfYear from "dayjs/plugin/weekOfYear";
 import utc from "dayjs/plugin/utc";
-import { adminProcedure, createTRPCRouter } from "~/server/api/trpc";
-import { seasons, weeks } from "~/server/db/schema";
+import { adminProcedure, createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { bookings, seasons, weeks } from "~/server/db/schema";
 import { TRPCError } from "@trpc/server";
-import { eq, or } from "drizzle-orm";
+import { eq, inArray, or } from "drizzle-orm";
 
 dayjs.extend(weekOfYear);
 dayjs.extend(utc);
@@ -24,6 +24,28 @@ export const seasonRouter = createTRPCRouter({
         .update(seasons)
         .set({ seasonStatus: input.status })
         .where(eq(seasons.id, input.seasonId));
+
+      if(input.status === "CLOSED") {
+        const weekRes = await ctx.db
+          .select({
+            id: weeks.id,
+          })
+          .from(weeks)
+          .where(eq(weeks.seasonId, input.seasonId));
+
+        await ctx.db
+          .update(bookings)
+          .set({
+            status: "BOOKED",
+            updatedAt: new Date(),
+          })
+          .where(inArray(bookings.weekId, weekRes.map((week) => week.id)));
+      }
+      if(input.status === "DELETED") {
+        //delete all weeks
+        await ctx.db.delete(weeks).where(eq(weeks.seasonId, input.seasonId));
+        await ctx.db.delete(seasons).where(eq(seasons.id, input.seasonId));
+      }
     }),
 
   createSeason: adminProcedure
@@ -87,6 +109,16 @@ export const seasonRouter = createTRPCRouter({
       };
     }),
 
+  getSeasonStatusById: protectedProcedure.input(z.number()).query(async ({ ctx, input }) => {
+    return await ctx.db
+      .select({
+        status: seasons.seasonStatus
+      })
+      .from(seasons)
+      .where(eq(seasons.id, input));
+  }),
+
+
   fetchAllSeasonWithStatusDraftOrOpen: adminProcedure.query(async ({ ctx }) => {
     return await ctx.db
       .select()
@@ -107,12 +139,12 @@ export const seasonRouter = createTRPCRouter({
       await ctx.db.delete(seasons).where(eq(seasons.id, input.seasonId));
     }),
 
-  fetchAllOpenSeasons: adminProcedure.query(async ({ ctx }) => {
+  fetchAllOpenOrClosedSeasons: protectedProcedure.query(async ({ ctx }) => {
     return await ctx.db
       .select()
       .from(seasons)
       .where(
-        eq(seasons.seasonStatus, "OPEN"),
+        or(eq(seasons.seasonStatus, "OPEN"), eq(seasons.seasonStatus, "CLOSED")),
       );
   }),
 });

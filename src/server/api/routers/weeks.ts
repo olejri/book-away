@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { adminProcedure, createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { eq, inArray } from "drizzle-orm";
 import { bookings, users, weeks } from "~/server/db/schema";
 
@@ -9,38 +9,46 @@ export const weekRouter = createTRPCRouter({
     .input(z.number())
     .query(async ({ ctx, input }) => {
       const weekRes = await ctx.db
-        .select()
+        .select({
+          id: weeks.id,
+          weekNumber: weeks.weekNumber,
+          from: weeks.from,
+          to: weeks.to,
+          weekStatus: weeks.weekStatus,
+          notBookableDays: weeks.notBookableDays,
+        })
         .from(weeks)
         .where(eq(weeks.seasonId, input));
 
       const weekIds = weekRes.map((week) => week.id);
-
       const bookingRes = await ctx.db
-        .select()
+        .select({
+          bookingId: bookings.id,
+          weekId: bookings.weekId,
+          pointsSpent: bookings.pointsSpent,
+          status: bookings.status,
+          name: users.name,
+        })
         .from(bookings)
         .innerJoin(users, eq(bookings.createdById, users.id))
         .where(inArray(bookings.weekId, weekIds));
 
       const weekIdMap = new Map<number, BookingResponse[]>();
-      bookingRes.forEach((bookingPlusUser) => {
-        const weekId = bookingPlusUser.booking.weekId ?? 0;
+      bookingRes.forEach((b) => {
+        const weekId = b.weekId ?? 0;
         if (weekIdMap.has(weekId)) {
           weekIdMap.get(weekId)?.push({
-            id: bookingPlusUser.booking.id,
-            pointsSpent: bookingPlusUser.booking.pointsSpent,
-            status: bookingPlusUser.booking.status,
-            user: {
-              name: bookingPlusUser.user.name,
-            },
+            id: b.bookingId,
+            pointsSpent: b.pointsSpent,
+            status: b.status,
+            name: b.name,
           });
         } else {
           weekIdMap.set(weekId, [{
-            id: bookingPlusUser.booking.id,
-            pointsSpent: bookingPlusUser.booking.pointsSpent,
-            status: bookingPlusUser.booking.status,
-            user: {
-              name: bookingPlusUser.user.name,
-            },
+            id: b.bookingId,
+            pointsSpent: b.pointsSpent,
+            status: b.status,
+            name: b.name,
           }]);
         }
       });
@@ -58,15 +66,30 @@ export const weekRouter = createTRPCRouter({
         } as WeekResponse;
       });
     }),
+
+  markWeekAsUnavailable: adminProcedure
+    .input(z.object({
+      weekId: z.number(),
+      weekStatus: z.enum(["FULLY_BOOKABLE",
+        "PARTIALLY_BOOKABLE",
+        "NOT_BOOKABLE"]),
+      notBookableDays: z.array(z.date()).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.update(weeks)
+        .set({
+          weekStatus: input.weekStatus,
+          notBookableDays: input.notBookableDays ?? null,
+        })
+        .where(eq(weeks.id, input.weekId))
+    }),
 });
 
 export type BookingResponse = {
   id: number;
   pointsSpent: number;
   status: "APPLIED" | "BOOKED" | "CANCELLED" | null;
-  user: {
-    name: string | null;
-  };
+  name: string | null
 };
 
 export type WeekResponse = {

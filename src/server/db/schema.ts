@@ -24,6 +24,12 @@ export const bookingStatus = pgEnum("booking_status", [
   "BOOKED",
   "CANCELLED",
 ]);
+
+export const bookingPriority = pgEnum("booking_priority", [
+  "PRIORITY_1",
+  "PRIORITY_2",
+]);
+
 export const seasonStatus = pgEnum("season_status", [
   "DRAFT",
   "OPEN",
@@ -146,6 +152,7 @@ export const bookings = createTable(
     }).notNull(),
     pointsSpent: integer("points_spent").notNull(),
     status: bookingStatus("booking_status").default("APPLIED"),
+    priority: bookingPriority("booking_priority").notNull(),
     createdById: varchar("created_by", { length: 255 })
       .notNull()
       .references(() => users.id),

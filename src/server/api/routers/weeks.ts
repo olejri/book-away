@@ -26,8 +26,10 @@ export const weekRouter = createTRPCRouter({
           bookingId: bookings.id,
           weekId: bookings.weekId,
           pointsSpent: bookings.pointsSpent,
+          priority: bookings.priority,
           status: bookings.status,
           name: users.name,
+          userId: users.id,
         })
         .from(bookings)
         .innerJoin(users, eq(bookings.createdById, users.id))
@@ -40,6 +42,8 @@ export const weekRouter = createTRPCRouter({
           weekIdMap.get(weekId)?.push({
             id: b.bookingId,
             pointsSpent: b.pointsSpent,
+            priority: b.priority,
+            bookingByUser: b.userId === ctx.session.user.id,
             status: b.status,
             name: b.name,
           });
@@ -47,6 +51,8 @@ export const weekRouter = createTRPCRouter({
           weekIdMap.set(weekId, [{
             id: b.bookingId,
             pointsSpent: b.pointsSpent,
+            priority: b.priority,
+            bookingByUser: b.userId === ctx.session.user.id,
             status: b.status,
             name: b.name,
           }]);
@@ -88,6 +94,8 @@ export const weekRouter = createTRPCRouter({
 export type BookingResponse = {
   id: number;
   pointsSpent: number;
+  bookingByUser: boolean;
+  priority: "PRIORITY_1" | "PRIORITY_2";
   status: "APPLIED" | "BOOKED" | "CANCELLED" | null;
   name: string | null
 };

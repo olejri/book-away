@@ -15,6 +15,7 @@ export const bookingRouter = createTRPCRouter({
       z.object({
         weekId: z.number(),
         pointsSpent: z.number(),
+        priority: z.enum(["PRIORITY_1", "PRIORITY_2"]),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -41,6 +42,7 @@ export const bookingRouter = createTRPCRouter({
       await ctx.db.insert(bookings).values({
         weekId: input.weekId,
         pointsSpent: input.pointsSpent,
+        priority: input.priority,
         from: new Date(),
         to: new Date(),
         createdById: ctx.session.user.id,

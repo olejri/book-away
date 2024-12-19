@@ -1,21 +1,30 @@
 "use client"
 
 interface AddBookingButtonProps {
-  isSelected: boolean;
-  onClick: () => void;
+  status: "NONE" | "USER" | "OTHER";
+  onClickAction: () => void;
 }
 
-export function PrioOneButton({ isSelected, onClick }: AddBookingButtonProps) {
+
+function getButtonColor(status: "NONE" | "USER" | "OTHER") {
+  if (status === "NONE") {
+    return "text-black";
+  } else if (status === "USER") {
+    return "text-green-500";
+  } else {
+    return "text-blue-500";
+  }
+}
+
+export function FirstPriorityButton({ status, onClickAction }: AddBookingButtonProps) {
   return (
     <>
       <svg
-        onClick={onClick}
+        onClick={onClickAction}
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
         fill="currentColor"
-        className={`w-6 h-6 ${
-          isSelected ? "text-green-500" : "text-black"
-        } transition-colors duration-300`}
+        className={`w-6 h-6 ${getButtonColor(status)} transition-colors duration-300`}
       >
         <path
           d="M11.47 3.841a.75.75 0 0 1 1.06 0l8.69 8.69a.75.75 0 1 0 1.06-1.061l-8.689-8.69a2.25 2.25 0 0 0-3.182 0l-8.69 8.69a.75.75 0 1 0 1.061 1.06l8.69-8.689Z" />
@@ -26,17 +35,15 @@ export function PrioOneButton({ isSelected, onClick }: AddBookingButtonProps) {
   );
 }
 
-export function PrioTwoButton({ isSelected, onClick }: AddBookingButtonProps) {
+export function SecondPriorityButton({ status, onClickAction }: AddBookingButtonProps) {
   return (
     <>
       <svg
-        onClick={onClick}
+        onClick={onClickAction}
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
         fill="currentColor"
-        className={`w-4 h-7 ${
-          isSelected ? "text-green-500" : "text-black"
-        } transition-colors duration-300`}
+        className={`w-4 h-7 ${getButtonColor(status)} transition-colors duration-300`}
       >
         <path
           d="M11.47 3.841a.75.75 0 0 1 1.06 0l8.69 8.69a.75.75 0 1 0 1.06-1.061l-8.689-8.69a2.25 2.25 0 0 0-3.182 0l-8.69 8.69a.75.75 0 1 0 1.061 1.06l8.69-8.689Z" />

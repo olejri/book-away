@@ -4,7 +4,8 @@ import { api } from "~/trpc/react";
 import dayjs from "dayjs";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { PrioOneButton, PrioTwoButton } from "~/app/_components/button";
+import { FirstPriorityButton, SecondPriorityButton } from "~/app/_components/button";
+import { type BookingResponse } from "~/server/api/routers/weeks";
 
 export function GetWeeksBySeason({ seasonId }: { seasonId: string }) {
   const { data, isLoading, isError, error } =
@@ -19,7 +20,7 @@ export function GetWeeksBySeason({ seasonId }: { seasonId: string }) {
 
   const utils = api.useUtils();
 
-  const book = api.booking.createBooking.useMutation({
+  const createBooking = api.booking.createBooking.useMutation({
     onSuccess: async () => {
       await utils.week.invalidate();
     },
@@ -55,6 +56,16 @@ export function GetWeeksBySeason({ seasonId }: { seasonId: string }) {
 
   function classNames(...classes: string[]) {
     return classes.filter(Boolean).join(" ");
+  }
+
+  function getStatus(bookings: BookingResponse[], priority: string) {
+    if(bookings.some((b) => b.bookingByUser && b.priority === priority)) {
+      return "USER";
+    } else if(bookings.some((b) => b.priority === priority)) {
+      return "OTHER";
+    } else {
+      return "NONE";
+    }
   }
 
   return (
@@ -117,7 +128,13 @@ export function GetWeeksBySeason({ seasonId }: { seasonId: string }) {
                   "font-smale w-6 py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6 lg:pl-8",
                 )}
               >
-                USERS
+                {week.bookings.map((booking) => (
+                    <p
+                      key={booking.id}
+                      className="text-sm text-gray-900 sm:pl-6 lg:pl-8"
+                    >{booking.name}
+                    </p>
+                  ))}
               </td>
               <td
                 className={classNames(
@@ -126,19 +143,17 @@ export function GetWeeksBySeason({ seasonId }: { seasonId: string }) {
                 )}
               >
                 <div className="flex flex-row gap-2" key={week.id}>
-                <PrioOneButton
-                  isSelected={week.bookings.filter((booking) => booking.bookingByUser)
-                    .some((booking) => booking.priority === "PRIORITY_1")}
-                  onClick={() => book.mutate({
+                <FirstPriorityButton
+                  status={getStatus(week.bookings, "PRIORITY_1")}
+                  onClickAction={() => createBooking.mutate({
                     weekId: week.id,
                     pointsSpent: 1,
                     priority: "PRIORITY_1",
                   })}
                 />
-                <PrioTwoButton
-                  isSelected={week.bookings.filter((booking) => booking.bookingByUser)
-                    .some((booking) => booking.priority === "PRIORITY_2")}
-                  onClick={() => book.mutate({
+                <SecondPriorityButton
+                  status={getStatus(week.bookings, "PRIORITY_2")}
+                  onClickAction={() => createBooking.mutate({
                     weekId: week.id,
                     pointsSpent: 1,
                     priority: "PRIORITY_2",

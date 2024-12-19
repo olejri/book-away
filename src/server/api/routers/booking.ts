@@ -1,9 +1,8 @@
 import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { bookings } from "~/server/db/schema";
-import {  eq, or } from "drizzle-orm";
-import { TRPCError } from "@trpc/server";
+import { bookings, seasons, users, weeks } from "~/server/db/schema";
+import { and, eq, inArray } from "drizzle-orm";
 
 export const bookingRouter = createTRPCRouter({
   getNumberOfPointsSpent: protectedProcedure.query(async ({ ctx }) => {
@@ -19,26 +18,18 @@ export const bookingRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      //check if user has booked for this week and if the week is not booked
-      const booking = await ctx.db
-        .select({
-          bookingId: bookings.id,
-        })
-        .from(bookings)
-        .where(
-          or(
-            eq(bookings.weekId, input.weekId),
-            eq(bookings.status, "BOOKED"),
-          ),
-        );
+      const bookingIdsToRemove = await ctx.db.select({
+        bookingId: bookings.id,
+      }).from(weeks)
+        .innerJoin(seasons, eq(weeks.seasonId, seasons.id))
+        .innerJoin(bookings, eq(weeks.id, bookings.weekId))
+        .innerJoin(users, eq(bookings.createdById, users.id))
+        .where(and(
+          eq(users.id, ctx.session.user.id ),
+          eq(bookings.priority, input.priority),
+        ));
 
-      if(booking.length > 0) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "You have already booked for this week",
-        });
-      }
-
+      await ctx.db.delete(bookings).where(inArray(bookings.id, bookingIdsToRemove.map((b) => b.bookingId)));
       await ctx.db.insert(bookings).values({
         weekId: input.weekId,
         pointsSpent: input.pointsSpent,
@@ -48,8 +39,4 @@ export const bookingRouter = createTRPCRouter({
         createdById: ctx.session.user.id,
       });
     }),
-
-  getSecretMessage: protectedProcedure.query(() => {
-    return "you can now see this secret message!";
-  }),
 });

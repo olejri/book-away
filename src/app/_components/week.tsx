@@ -6,6 +6,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FirstPriorityButton, SecondPriorityButton } from "~/app/_components/button";
 import { type BookingResponse } from "~/server/api/routers/weeks";
+import Image from 'next/image'
 
 export function GetWeeksBySeason({ seasonId }: { seasonId: string }) {
   const { data, isLoading, isError, error } =
@@ -128,13 +129,21 @@ export function GetWeeksBySeason({ seasonId }: { seasonId: string }) {
                   "font-smale w-6 py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6 lg:pl-8",
                 )}
               >
-                {week.bookings.map((booking) => (
-                    <p
-                      key={booking.id}
-                      className="text-sm text-gray-900 sm:pl-6 lg:pl-8"
-                    >{booking.name}
-                    </p>
-                  ))}
+                <div className="mt-4 flex-shrink-0 sm:ml-5 sm:mt-0">
+                  <div className="flex -space-x-1 overflow-hidden">
+                    {week.bookings.map((booking) => (
+                      <Image
+                        width={300}
+                        height={300}
+                        key={booking.id}
+                        className="inline-block h-6 w-6 rounded-full border-0"
+                        src={booking.image ?? "hei"}
+                        alt={booking.name ?? ""}
+                        title={booking.name ?? ""}
+                      />
+                    ))}
+                  </div>
+                </div>
               </td>
               <td
                 className={classNames(
@@ -143,22 +152,26 @@ export function GetWeeksBySeason({ seasonId }: { seasonId: string }) {
                 )}
               >
                 <div className="flex flex-row gap-2" key={week.id}>
-                <FirstPriorityButton
-                  status={getStatus(week.bookings, "PRIORITY_1")}
-                  onClickAction={() => createBooking.mutate({
-                    weekId: week.id,
-                    pointsSpent: 1,
-                    priority: "PRIORITY_1",
-                  })}
-                />
-                <SecondPriorityButton
-                  status={getStatus(week.bookings, "PRIORITY_2")}
-                  onClickAction={() => createBooking.mutate({
-                    weekId: week.id,
-                    pointsSpent: 1,
-                    priority: "PRIORITY_2",
-                  })}
-                />
+                  <FirstPriorityButton
+                    status={getStatus(week.bookings, "PRIORITY_1")}
+                    onClickAction={() =>
+                      createBooking.mutate({
+                        weekId: week.id,
+                        pointsSpent: 1,
+                        priority: "PRIORITY_1",
+                      })
+                    }
+                  />
+                  <SecondPriorityButton
+                    status={getStatus(week.bookings, "PRIORITY_2")}
+                    onClickAction={() =>
+                      createBooking.mutate({
+                        weekId: week.id,
+                        pointsSpent: 1,
+                        priority: "PRIORITY_2",
+                      })
+                    }
+                  />
                 </div>
               </td>
             </tr>

@@ -30,6 +30,7 @@ export const weekRouter = createTRPCRouter({
           status: bookings.status,
           name: users.name,
           userId: users.id,
+          image: users.image,
         })
         .from(bookings)
         .innerJoin(users, eq(bookings.createdById, users.id))
@@ -46,6 +47,7 @@ export const weekRouter = createTRPCRouter({
             bookingByUser: b.userId === ctx.session.user.id,
             status: b.status,
             name: b.name,
+            image: b.image,
           });
         } else {
           weekIdMap.set(weekId, [{
@@ -55,6 +57,7 @@ export const weekRouter = createTRPCRouter({
             bookingByUser: b.userId === ctx.session.user.id,
             status: b.status,
             name: b.name,
+            image: b.image,
           }]);
         }
       });
@@ -98,6 +101,7 @@ export type BookingResponse = {
   priority: "PRIORITY_1" | "PRIORITY_2";
   status: "APPLIED" | "BOOKED" | "CANCELLED" | null;
   name: string | null
+  image: string | null;
 };
 
 export type WeekResponse = {

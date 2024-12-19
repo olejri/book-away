@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { bookings, seasons, users, weeks } from "~/server/db/schema";
 import { and, eq, inArray } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 
 export const bookingRouter = createTRPCRouter({
   getNumberOfPointsSpent: protectedProcedure.query(async ({ ctx }) => {
@@ -18,6 +19,16 @@ export const bookingRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      const seasonForGivenWeek = await ctx.db.select({
+        seasonId: weeks.seasonId,
+      }).from(weeks)
+        .where(eq(weeks.id, input.weekId));
+
+      if(seasonForGivenWeek.length === 0) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+
+      const seasonId = seasonForGivenWeek[0]?.seasonId ?? 0;
       const bookingIdsToRemove = await ctx.db.select({
         bookingId: bookings.id,
       }).from(weeks)
@@ -27,6 +38,8 @@ export const bookingRouter = createTRPCRouter({
         .where(and(
           eq(users.id, ctx.session.user.id ),
           eq(bookings.priority, input.priority),
+          eq(bookings.status, "APPLIED"),
+          eq(weeks.seasonId, seasonId),
         ));
 
       await ctx.db.delete(bookings).where(inArray(bookings.id, bookingIdsToRemove.map((b) => b.bookingId)));

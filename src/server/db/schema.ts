@@ -1,13 +1,16 @@
 import { relations, sql } from "drizzle-orm";
 import {
   index,
-  integer, json,
+  integer,
+  json,
   pgEnum,
   pgTableCreator,
   primaryKey,
   text,
   timestamp,
-  varchar
+  boolean,
+  varchar,
+  unique,
 } from "drizzle-orm/pg-core";
 import { type AdapterAccount } from "next-auth/adapters";
 
@@ -36,11 +39,7 @@ export const seasonStatus = pgEnum("season_status", [
   "CLOSED",
   "DELETED",
 ]);
-export const userRole = pgEnum("role", [
-  "USER",
-  "SUPERUSER",
-  "ADMIN"
-]);
+export const userRole = pgEnum("role", ["USER", "SUPERUSER", "ADMIN"]);
 export const weekStatus = pgEnum("week_status", [
   "FULLY_BOOKABLE",
   "PARTIALLY_BOOKABLE",
@@ -137,33 +136,30 @@ export const verificationTokens = createTable(
   }),
 );
 
-export const bookings = createTable(
-  "booking",
-  {
-    id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-    weekId: integer("week_id"),
-    from: timestamp("from", {
-      mode: "date",
-      withTimezone: true,
-    }).notNull(),
-    to: timestamp("to", {
-      mode: "date",
-      withTimezone: true,
-    }).notNull(),
-    pointsSpent: integer("points_spent").notNull(),
-    status: bookingStatus("booking_status").default("APPLIED"),
-    priority: bookingPriority("booking_priority").notNull(),
-    createdById: varchar("created_by", { length: 255 })
-      .notNull()
-      .references(() => users.id),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(
-      () => new Date(),
-    ),
-  },
-);
+export const bookings = createTable("booking", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  weekId: integer("week_id"),
+  from: timestamp("from", {
+    mode: "date",
+    withTimezone: true,
+  }).notNull(),
+  to: timestamp("to", {
+    mode: "date",
+    withTimezone: true,
+  }).notNull(),
+  pointsSpent: integer("points_spent").notNull(),
+  status: bookingStatus("booking_status").default("APPLIED"),
+  priority: bookingPriority("booking_priority").notNull(),
+  createdById: varchar("created_by", { length: 255 })
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(
+    () => new Date(),
+  ),
+});
 
 export const bookingRelations = relations(bookings, ({ one }) => ({
   user: one(users, { fields: [bookings.createdById], references: [users.id] }),
@@ -223,4 +219,23 @@ export const seasons = createTable("season", {
 
 export const seasonRelations = relations(seasons, ({ one }) => ({
   user: one(users, { fields: [seasons.createdById], references: [users.id] }),
+}));
+
+export const info = createTable(
+  "info",
+  {
+    id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+    type: varchar("type", { length: 255 }).notNull(),
+    hasSeen: boolean("has_seen").default(true),
+    userId: varchar("user_id", { length: 255 })
+      .notNull()
+      .references(() => users.id),
+  },
+  (info) => ({
+    unq: unique().on(info.type, info.userId),
+  }),
+);
+
+export const infoRelations = relations(info, ({ one }) => ({
+  user: one(users, { fields: [info.userId], references: [users.id] }),
 }));

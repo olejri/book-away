@@ -7,7 +7,16 @@ import "./src/env.js";
 /** @type {import("next").NextConfig} */
 const config = {
   images: {
-    domains: ["cdn.discordapp.com", "avatars.slack-edge.com"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "cdn.discordapp.com",
+      },
+      {
+        protocol: "https",
+        hostname: "avatars.slack-edge.com",
+      }
+    ],
   },
 };
 

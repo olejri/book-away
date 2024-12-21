@@ -291,7 +291,6 @@ export function GetWeeksBySeason({ seasonId }: { seasonId: string }) {
                     onClickAction={() =>
                       createBooking.mutate({
                         weekId: week.id,
-                        pointsSpent: 1,
                         priority: "PRIORITY_1",
                       })
                     }
@@ -301,7 +300,6 @@ export function GetWeeksBySeason({ seasonId }: { seasonId: string }) {
                     onClickAction={() =>
                       createBooking.mutate({
                         weekId: week.id,
-                        pointsSpent: 1,
                         priority: "PRIORITY_2",
                       })
                     }

@@ -205,6 +205,7 @@ export const seasons = createTable("season", {
     mode: "date",
     withTimezone: true,
   }).notNull(),
+  seasonCost: integer("season_cost").notNull(),
   seasonStatus: seasonStatus("season_status").default("DRAFT"),
   createdAt: timestamp("created_at", { withTimezone: true }).default(
     sql`CURRENT_TIMESTAMP`,

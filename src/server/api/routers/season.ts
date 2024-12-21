@@ -52,6 +52,7 @@ export const seasonRouter = createTRPCRouter({
     .input(
       z.object({
         name: z.string(),
+        seasonCost: z.number(),
         from: z.date(),
         to: z.date(),
       }),
@@ -63,6 +64,7 @@ export const seasonRouter = createTRPCRouter({
           from: input.from,
           to: input.to,
           name: input.name,
+          seasonCost: input.seasonCost,
           createdById: ctx.session.user.id,
         })
         .returning({

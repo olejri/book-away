@@ -15,11 +15,21 @@ export function CreateSeason() {
     },
   });
 
+  type SeasonType = {
+    name: string;
+    seasonCost: number;
+  };
+  const seasonsWithCost: SeasonType[] = [
+    { name: "Winter", seasonCost: 2 },
+    { name: "Summer", seasonCost: 1 },
+    { name: "Fall", seasonCost: 1 },
+  ];
 
   const [name, setName] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [seasonType, setSeasonType] = useState<SeasonType | undefined>();
 
 
   if (isLoading) {
@@ -31,10 +41,10 @@ export function CreateSeason() {
   }
 
   return (
-    <div className="w-full max-w-xs mx-auto p-4 text-black">
+    <div className="mx-auto w-full max-w-xs p-4 text-black">
       {/* Trigger button for the modal */}
       <button
-        className="rounded-full bg-blue-500 text-white px-5 py-2 font-semibold transition hover:bg-blue-600"
+        className="rounded-full bg-blue-500 px-5 py-2 font-semibold text-white transition hover:bg-blue-600"
         onClick={() => setIsModalOpen(true)}
       >
         Create Season
@@ -43,12 +53,12 @@ export function CreateSeason() {
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-            <h2 className="text-lg font-semibold mb-4">Create New Season</h2>
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
+            <h2 className="mb-4 text-lg font-semibold">Create New Season</h2>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                if (!name || !from || !to) {
+                if (!name || !from || !to || !seasonType?.seasonCost) {
                   alert("Please fill in all fields");
                   return;
                 }
@@ -56,6 +66,7 @@ export function CreateSeason() {
                   name,
                   from: dayjs(from).toDate(),
                   to: dayjs(to).toDate(),
+                  seasonCost: seasonType?.seasonCost ?? 0,
                 });
                 setIsModalOpen(false);
               }}
@@ -78,7 +89,34 @@ export function CreateSeason() {
                   required
                 />
               </div>
-
+              <div>
+                <label
+                  htmlFor="seasonCost"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Season Type
+                </label>
+                <select
+                  id="seasonCost"
+                  onChange={(e) => {
+                    const selectedSeason = seasonsWithCost.find(
+                      (season) => season.name === e.target.value,
+                    );
+                    setSeasonType(selectedSeason);
+                  }}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  required
+                >
+                  <option value="" disabled>
+                    Select a season
+                  </option>
+                  {seasonsWithCost.map((season) => (
+                    <option key={season.name} value={season.name}>
+                      {season.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div>
                 <label
                   htmlFor="from"
@@ -116,14 +154,14 @@ export function CreateSeason() {
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
-                  className="rounded-full bg-gray-300 text-gray-800 px-5 py-2 font-semibold transition hover:bg-gray-400"
+                  className="rounded-full bg-gray-300 px-5 py-2 font-semibold text-gray-800 transition hover:bg-gray-400"
                   onClick={() => setIsModalOpen(false)}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded-full bg-blue-500 text-white px-5 py-2 font-semibold transition hover:bg-blue-600 disabled:bg-gray-300"
+                  className="rounded-full bg-blue-500 px-5 py-2 font-semibold text-white transition hover:bg-blue-600 disabled:bg-gray-300"
                   disabled={createSeason.isPending}
                 >
                   {createSeason.isPending ? "Creating..." : "Create"}
@@ -135,9 +173,7 @@ export function CreateSeason() {
       )}
 
       {/* Seasons List */}
-      {seasons?.map((season) => (
-        <SeasonCard key={season.id} season={season} />
-      ))}
+      {seasons?.map((season) => <SeasonCard key={season.id} season={season} />)}
     </div>
   );
 }

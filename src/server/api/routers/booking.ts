@@ -14,14 +14,15 @@ export const bookingRouter = createTRPCRouter({
     .input(
       z.object({
         weekId: z.number(),
-        pointsSpent: z.number(),
         priority: z.enum(["PRIORITY_1", "PRIORITY_2"]),
       }),
     )
     .mutation(async ({ input, ctx }) => {
       const seasonForGivenWeek = await ctx.db.select({
         seasonId: weeks.seasonId,
+        seasonCost: seasons.seasonCost,
       }).from(weeks)
+        .innerJoin(seasons, eq(weeks.seasonId, seasons.id))
         .where(eq(weeks.id, input.weekId));
 
       if(seasonForGivenWeek.length === 0) {
@@ -29,6 +30,7 @@ export const bookingRouter = createTRPCRouter({
       }
 
       const seasonId = seasonForGivenWeek[0]?.seasonId ?? 0;
+      const seasonCost = seasonForGivenWeek[0]?.seasonCost ?? 0;
       const bookingIdsToRemove = await ctx.db.select({
         bookingId: bookings.id,
       }).from(weeks)
@@ -45,7 +47,7 @@ export const bookingRouter = createTRPCRouter({
       await ctx.db.delete(bookings).where(inArray(bookings.id, bookingIdsToRemove.map((b) => b.bookingId)));
       await ctx.db.insert(bookings).values({
         weekId: input.weekId,
-        pointsSpent: input.pointsSpent,
+        pointsSpent: seasonCost,
         priority: input.priority,
         from: new Date(),
         to: new Date(),

@@ -39,7 +39,7 @@ export const userRouter = createTRPCRouter({
         ).orderBy(sql`${bookings.from} asc limit 1`);
 
       if(weekRes.length === 0) {
-        return [];
+        return null;
       }
       return weekRes[0];
     }),

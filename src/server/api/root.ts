@@ -1,9 +1,6 @@
-import { bookingRouter } from "~/server/api/routers/booking";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
-import { seasonRouter } from "~/server/api/routers/season";
-import { weekRouter } from "~/server/api/routers/weeks";
-import { userRouter } from "~/server/api/routers/user";
-import { infoRouter } from "~/server/api/routers/info";
+import { settingsRouter } from "~/server/api/routers/settings";
+import { trelloRouter } from "~/server/api/routers/trello";
 
 /**
  * This is the primary router for your server.
@@ -11,11 +8,8 @@ import { infoRouter } from "~/server/api/routers/info";
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
-  booking: bookingRouter,
-  season: seasonRouter,
-  week: weekRouter,
-  user: userRouter,
-  info: infoRouter,
+  settings: settingsRouter,
+  trello: trelloRouter,
 });
 
 // export type definition of API

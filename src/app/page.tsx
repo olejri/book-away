@@ -1,41 +1,41 @@
-import Link from "next/link";
-
+﻿import Link from "next/link";
 import { auth } from "~/server/auth";
-import { HydrateClient } from "~/trpc/server";
-import { UserRole } from "~/server/auth/config";
-
-export default async function Home() {
+export default async function HomePage() {
   const session = await auth();
-
   return (
-    <HydrateClient>
-      <main className="container mx-auto sm:px-6 lg:px-8">
-        <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-          <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex flex-col items-center justify-center gap-4">
-                <p className="text-center text-2xl text-white">
-                  {session && <span>Logged in as {session.user?.name}</span>}
-                </p>
-                <Link
-                  href={session ? "/api/auth/signout" : "/api/auth/signin"}
-                  className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20"
-                >
-                  {session ? "Sign out" : "Sign in"}
-                </Link>
-              </div>
-            </div>
-            {/*link to admin/season/create-season*/}
-            {session?.user && session.user.role === UserRole.ADMIN && <Link href="/admin/dashboard/create-season" className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20">Create Season</Link>}
-            {/*link to user*/}
-            {session?.user && <Link href="/user" className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20">My profile</Link>}
-            {/*link to book*/}
-            {session?.user && <Link href="/book" className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20">Book</Link>}
-            {/*link to userView*/}
-            {session?.user && <Link href="/user" className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20">User</Link>}
+    <div className="flex min-h-[80vh] flex-col items-center justify-center gap-8 text-center">
+      <div className="flex flex-col items-center gap-4">
+        <span className="text-7xl">mic</span>
+        <h1 className="text-4xl font-bold">Trello Voice</h1>
+        <p className="max-w-sm text-lg text-white/60">
+          Speak your idea. Create a Trello card instantly.
+        </p>
+      </div>
+      {session?.user ? (
+        <div className="flex w-full max-w-xs flex-col gap-3">
+          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+            <p className="text-xs text-white/40">Signed in as</p>
+            <p className="font-semibold">{session.user.name}</p>
           </div>
+          <Link href="/dashboard" className="w-full rounded-xl bg-[#4f6ef7] py-3 text-center font-semibold text-white hover:bg-[#3d5ce0] transition-colors">
+            Go to Dashboard
+          </Link>
+          <Link href="/settings" className="w-full rounded-xl border border-white/10 py-3 text-center text-white/70 hover:bg-white/5 transition-colors">
+            Settings
+          </Link>
         </div>
-      </main>
-    </HydrateClient>
+      ) : (
+        <div className="flex w-full max-w-xs flex-col gap-4">
+          <div className="flex flex-col gap-2 rounded-xl border border-white/10 bg-white/5 p-4 text-left text-sm text-white/60">
+            <p>Sign in with Discord or Slack</p>
+            <p>Save your Trello board email</p>
+            <p>Speak a card idea - done in seconds</p>
+          </div>
+          <Link href="/api/auth/signin" className="w-full rounded-xl bg-[#4f6ef7] py-3 text-center font-semibold text-white hover:bg-[#3d5ce0] transition-colors">
+            Sign In to Get Started
+          </Link>
+        </div>
+      )}
+    </div>
   );
 }

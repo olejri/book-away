@@ -16,6 +16,8 @@ export const env = createEnv({
     AUTH_SLACK_ID: z.string(),
     AUTH_SLACK_SECRET: z.string(),
     DATABASE_URL: z.string().url(),
+    RESEND_API_KEY: z.string(),
+    RESEND_FROM_EMAIL: z.string().email().default("onboarding@resend.dev"),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -26,10 +28,7 @@ export const env = createEnv({
    * isn't built with invalid env vars. To expose them to the client, prefix them with
    * `NEXT_PUBLIC_`.
    */
-  client: {
-    // NEXT_PUBLIC_CLIENTVAR: z.string(),
-  },
-
+  client: {},
   /**
    * You can't destruct `process.env` as a regular object in the Next.js edge runtimes (e.g.
    * middlewares) or client-side so we need to destruct manually.
@@ -41,6 +40,8 @@ export const env = createEnv({
     AUTH_SLACK_ID: process.env.AUTH_SLACK_ID,
     AUTH_SLACK_SECRET: process.env.AUTH_SLACK_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
+    RESEND_API_KEY: process.env.RESEND_API_KEY,
+    RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,
     NODE_ENV: process.env.NODE_ENV,
   },
   /**

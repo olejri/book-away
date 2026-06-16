@@ -2,49 +2,17 @@ import { relations, sql } from "drizzle-orm";
 import {
   index,
   integer,
-  json,
-  pgEnum,
   pgTableCreator,
   primaryKey,
   text,
   timestamp,
-  boolean,
   varchar,
-  unique,
 } from "drizzle-orm/pg-core";
 import { type AdapterAccount } from "next-auth/adapters";
 
-/**
- * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
- * database instance for multiple projects.
- *
- * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
- */
 export const createTable = pgTableCreator((name) => `book-away_${name}`);
 
-export const bookingStatus = pgEnum("booking_status", [
-  "APPLIED",
-  "BOOKED",
-  "CANCELLED",
-]);
-
-export const bookingPriority = pgEnum("booking_priority", [
-  "PRIORITY_1",
-  "PRIORITY_2",
-]);
-
-export const seasonStatus = pgEnum("season_status", [
-  "DRAFT",
-  "OPEN",
-  "CLOSED",
-  "DELETED",
-]);
-export const userRole = pgEnum("role", ["USER", "SUPERUSER", "ADMIN"]);
-export const weekStatus = pgEnum("week_status", [
-  "FULLY_BOOKABLE",
-  "PARTIALLY_BOOKABLE",
-  "NOT_BOOKABLE",
-]);
+// ─── Auth tables (required by NextAuth Drizzle Adapter) ───────────────────────
 
 export const users = createTable("user", {
   id: varchar("id", { length: 255 })
@@ -58,11 +26,11 @@ export const users = createTable("user", {
     withTimezone: true,
   }).default(sql`CURRENT_TIMESTAMP`),
   image: varchar("image", { length: 255 }),
-  role: userRole("role").default("USER"),
 });
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ many, one }) => ({
   accounts: many(accounts),
+  settings: one(userSettings),
 }));
 
 export const accounts = createTable(
@@ -136,23 +104,18 @@ export const verificationTokens = createTable(
   }),
 );
 
-export const bookings = createTable("booking", {
-  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  weekId: integer("week_id"),
-  from: timestamp("from", {
-    mode: "date",
-    withTimezone: true,
-  }).notNull(),
-  to: timestamp("to", {
-    mode: "date",
-    withTimezone: true,
-  }).notNull(),
-  pointsSpent: integer("points_spent").notNull(),
-  status: bookingStatus("booking_status").default("APPLIED"),
-  priority: bookingPriority("booking_priority").notNull(),
-  createdById: varchar("created_by", { length: 255 })
+// ─── App tables ───────────────────────────────────────────────────────────────
+
+export const userSettings = createTable("user_settings", {
+  id: varchar("id", { length: 255 })
     .notNull()
-    .references(() => users.id),
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: varchar("user_id", { length: 255 })
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: "cascade" }),
+  trelloEmail: varchar("trello_email", { length: 255 }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),
@@ -161,82 +124,6 @@ export const bookings = createTable("booking", {
   ),
 });
 
-export const bookingRelations = relations(bookings, ({ one }) => ({
-  user: one(users, { fields: [bookings.createdById], references: [users.id] }),
-  week: one(weeks, { fields: [bookings.weekId], references: [weeks.id] }),
-}));
-
-export const weeks = createTable("week", {
-  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  seasonId: integer("season_id")
-    .notNull()
-    .references(() => seasons.id),
-  weekNumber: integer("week_number").notNull(),
-  notBookableDays: json("not_bookable_days"),
-  weekStatus: weekStatus("week_status").default("FULLY_BOOKABLE").notNull(),
-  from: timestamp("from", {
-    mode: "date",
-    withTimezone: false,
-  }).notNull(),
-  to: timestamp("to", {
-    mode: "date",
-    withTimezone: false,
-  }).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).default(
-    sql`CURRENT_TIMESTAMP`,
-  ),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(
-    () => new Date(),
-  ),
-});
-
-export const weekRelations = relations(weeks, ({ one }) => ({
-  season: one(seasons, { fields: [weeks.seasonId], references: [seasons.id] }),
-}));
-
-export const seasons = createTable("season", {
-  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  name: varchar("name", { length: 255 }),
-  from: timestamp("from", {
-    mode: "date",
-    withTimezone: true,
-  }).notNull(),
-  to: timestamp("to", {
-    mode: "date",
-    withTimezone: true,
-  }).notNull(),
-  seasonCost: integer("season_cost").notNull(),
-  seasonStatus: seasonStatus("season_status").default("DRAFT"),
-  createdAt: timestamp("created_at", { withTimezone: true }).default(
-    sql`CURRENT_TIMESTAMP`,
-  ),
-  createdById: varchar("created_by", { length: 255 })
-    .notNull()
-    .references(() => users.id),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(
-    () => new Date(),
-  ),
-});
-
-export const seasonRelations = relations(seasons, ({ one }) => ({
-  user: one(users, { fields: [seasons.createdById], references: [users.id] }),
-}));
-
-export const info = createTable(
-  "info",
-  {
-    id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-    type: varchar("type", { length: 255 }).notNull(),
-    hasSeen: boolean("has_seen").default(true),
-    userId: varchar("user_id", { length: 255 })
-      .notNull()
-      .references(() => users.id),
-  },
-  (info) => ({
-    unq: unique().on(info.type, info.userId),
-  }),
-);
-
-export const infoRelations = relations(info, ({ one }) => ({
-  user: one(users, { fields: [info.userId], references: [users.id] }),
+export const userSettingsRelations = relations(userSettings, ({ one }) => ({
+  user: one(users, { fields: [userSettings.userId], references: [users.id] }),
 }));

@@ -93,15 +93,66 @@ export function SettingsForm({ currentEmail }: Props) {
       {/* How-to card */}
       <div className="rounded-xl border border-white/10 bg-white/5 p-5">
         <p className="text-sm font-semibold">How to find your Trello board email</p>
-        <ol className="mt-2 list-decimal space-y-1 pl-4 text-sm text-white/50">
+        <ol className="mt-2 list-decimal space-y-1.5 pl-4 text-sm text-white/50">
           <li>Open your Trello board</li>
-          <li>Click <strong className="text-white/70">Share</strong> (top right)</li>
-          <li>Select <strong className="text-white/70">Print, export, and share</strong></li>
-          <li>Copy the <strong className="text-white/70">Email-to-board address</strong></li>
+          <li>Open the board sidebar and click <strong className="text-white/70">More</strong></li>
+          <li>Click <strong className="text-white/70">Email-to-board Settings</strong></li>
+          <li>Copy your unique board email address</li>
+          <li>
+            In that menu you can also choose which <strong className="text-white/70">list</strong> new
+            cards land in and whether they go to the top or bottom
+          </li>
         </ol>
         <p className="mt-3 text-xs text-white/30">
           💡 Tip: Use your personal email first to test the flow without posting to Trello.
         </p>
+      </div>
+
+      {/* Email formatting tips */}
+      <div className="rounded-xl border border-[#4f6ef7]/20 bg-[#4f6ef7]/5 p-5">
+        <p className="text-sm font-semibold text-[#7b96fa]">✉️ How email becomes a Trello card</p>
+        <ul className="mt-3 space-y-2 text-sm text-white/60">
+          <li className="flex gap-2">
+            <span className="mt-0.5 shrink-0 text-[#7b96fa]">→</span>
+            <span>The <strong className="text-white/80">email subject</strong> becomes the card name</span>
+          </li>
+          <li className="flex gap-2">
+            <span className="mt-0.5 shrink-0 text-[#7b96fa]">→</span>
+            <span>The <strong className="text-white/80">email body</strong> becomes the card description</span>
+          </li>
+          <li className="flex gap-2">
+            <span className="mt-0.5 shrink-0 text-[#7b96fa]">→</span>
+            <span>Add <strong className="text-white/80">labels</strong> in the subject with <code className="rounded bg-white/10 px-1 text-xs">#labelname</code> or <code className="rounded bg-white/10 px-1 text-xs">#labelcolor</code> — use underscores for multi-word labels, e.g. <code className="rounded bg-white/10 px-1 text-xs">#To_Do</code></span>
+          </li>
+          <li className="flex gap-2">
+            <span className="mt-0.5 shrink-0 text-[#7b96fa]">→</span>
+            <span>Add <strong className="text-white/80">members</strong> with <code className="rounded bg-white/10 px-1 text-xs">@username</code> in the subject, or on its own line in the body</span>
+          </li>
+          <li className="flex gap-2">
+            <span className="mt-0.5 shrink-0 text-[#7b96fa]">→</span>
+            <span><strong className="text-white/80">Attachments</strong> are added to the card (up to 10 MB)</span>
+          </li>
+        </ul>
+      </div>
+
+      {/* Board vs card email note */}
+      <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+        <p className="text-sm font-semibold">📌 Good to know</p>
+        <div className="mt-2 space-y-2 text-sm text-white/50">
+          <p>
+            Every Trello board — and every individual card — has its own unique email address. The board
+            email creates new cards; a card&apos;s email adds comments to that specific card.
+          </p>
+          <p>
+            To get a <strong className="text-white/70">card&apos;s</strong> email address: open the card →
+            click <strong className="text-white/70">Share and more</strong> at the bottom of the card menu
+            → copy the email shown.
+          </p>
+          <p className="text-white/30">
+            ⚠️ Your board email is unique to <em>you</em> as a member — don&apos;t share it, otherwise
+            cards created by email will appear under your name.
+          </p>
+        </div>
       </div>
     </div>
   );

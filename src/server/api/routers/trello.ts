@@ -9,7 +9,8 @@ export const trelloRouter = createTRPCRouter({
   createCard: protectedProcedure
     .input(
       z.object({
-        text: z.string().min(1, "Card text cannot be empty").max(500),
+        title: z.string().min(1, "Card title cannot be empty").max(500),
+        description: z.string().max(2000).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -27,8 +28,8 @@ export const trelloRouter = createTRPCRouter({
 
       await sendEmail({
         to: settings.trelloEmail,
-        subject: input.text,
-        body: input.text,
+        subject: input.title,
+        body: input.description ?? input.title,
       });
 
       return { success: true };

@@ -38,8 +38,10 @@ export function VoiceRecorderInner() {
   const handleTranscript = useCallback(
     (text: string) => {
       const normalized = normalizeVoiceInput(text);
-      if (activeField === "title") setTitle(normalized);
-      if (activeField === "description") setDescription(normalized);
+      if (activeField === "title")
+        setTitle((prev) => (prev.trim() ? `${prev.trim()} ${normalized}` : normalized));
+      if (activeField === "description")
+        setDescription((prev) => (prev.trim() ? `${prev.trim()} ${normalized}` : normalized));
     },
     [activeField],
   );
@@ -68,8 +70,6 @@ export function VoiceRecorderInner() {
   const startRecording = useCallback((field: ActiveField) => {
     if (!workerConfig) { toast.error("Speech service not ready yet, please wait."); return; }
     setActiveField(field);
-    if (field === "title") setTitle("");
-    if (field === "description") setDescription("");
     void start();
   }, [workerConfig, start]);
 
@@ -125,7 +125,12 @@ export function VoiceRecorderInner() {
       {/* Title field */}
       <div className="flex flex-col gap-1">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-medium text-white/60">Card Title</label>
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-medium text-white/60">Card Title</label>
+            {title && (
+              <button type="button" onClick={() => setTitle("")} className="text-xs text-white/30 hover:text-white/60 transition-colors">✕ clear</button>
+            )}
+          </div>
           <MicButton
             isRecording={isRecording && activeField === "title"}
             isTranscribing={isTranscribing && activeField === "title"}
@@ -197,9 +202,14 @@ export function VoiceRecorderInner() {
       {/* Description field */}
       <div className="flex flex-col gap-1">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-medium text-white/60">
-            Description <span className="text-white/30">(card body — optional)</span>
-          </label>
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-medium text-white/60">
+              Description <span className="text-white/30">(card body — optional)</span>
+            </label>
+            {description && (
+              <button type="button" onClick={() => setDescription("")} className="text-xs text-white/30 hover:text-white/60 transition-colors">✕ clear</button>
+            )}
+          </div>
           <MicButton
             isRecording={isRecording && activeField === "description"}
             isTranscribing={isTranscribing && activeField === "description"}
@@ -236,7 +246,7 @@ export function VoiceRecorderInner() {
           <p><span className="text-[#7b96fa]">&ldquo;assign john&rdquo;</span> → @john</p>
           <p><span className="text-[#7b96fa]">&ldquo;mention sarah&rdquo;</span> → @sarah</p>
         </div>
-        <p className="mt-1 text-white/25">Powered by Google Speech-to-Text V2 — Norwegian &amp; English.</p>
+        <p className="mt-1 text-white/25">Powered by Google Speech-to-Text — Norwegian &amp; English.</p>
       </div>
 
       {/* Live preview */}

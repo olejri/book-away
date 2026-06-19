@@ -43,7 +43,6 @@ export const settingsRouter = createTRPCRouter({
   getBoardEmails: protectedProcedure.query(async ({ ctx }) => {
     return ctx.db.query.trelloBoardEmails.findMany({
       where: eq(trelloBoardEmails.userId, ctx.session.user.id),
-      orderBy: (t, { asc }) => asc(t.createdAt),
     });
   }),
 

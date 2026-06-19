@@ -175,7 +175,7 @@ export function SettingsForm() {
           <li>Open the board sidebar and click <strong className="text-white/70">More</strong></li>
           <li>Click <strong className="text-white/70">Email-to-board Settings</strong></li>
           <li>Copy your unique board email address</li>
-          <li>Give it a nickname like <em className="text-white/60">"Incoming – Team Global"</em> so you know which list it lands in</li>
+          <li>Give it a nickname like <em className="text-white/60">&ldquo;Incoming – Team Global&rdquo;</em> so you know which list it lands in</li>
         </ol>
         <p className="mt-3 text-xs text-white/30">
           💡 Tip: Add multiple entries for the same board with different lists (top vs. bottom, different columns).

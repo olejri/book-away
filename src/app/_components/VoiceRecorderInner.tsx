@@ -16,15 +16,31 @@ const LANGUAGES: { code: Language; label: string; flag: string }[] = [
 ];
 
 const LANGUAGE_STORAGE_KEY = "book-away:language";
+const BOARD_STORAGE_KEY = "book-away:boardId";
 
 export function VoiceRecorderInner() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [memberInput, setMemberInput] = useState("");
   const [activeField, setActiveField] = useState<ActiveField>(null);
-  const [selectedBoardId, setSelectedBoardId] = useState<string>("");
+  const [selectedBoardId, setSelectedBoardId] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem(BOARD_STORAGE_KEY) ?? "";
+  });
 
   const { data: boards = [] } = api.settings.getBoardEmails.useQuery();
+
+  // Auto-select first board if stored selection no longer exists or nothing is stored
+  useEffect(() => {
+    if (boards.length === 0) return;
+    const stored = localStorage.getItem(BOARD_STORAGE_KEY) ?? "";
+    const stillValid = boards.some((b) => b.id === stored);
+    if (!stillValid) {
+      const first = boards[0]!.id;
+      setSelectedBoardId(first);
+      localStorage.setItem(BOARD_STORAGE_KEY, first);
+    }
+  }, [boards]);
 
   const [language, setLanguage] = useState<Language>(() => {
     if (typeof window === "undefined") return "nb-NO";
@@ -114,7 +130,10 @@ export function VoiceRecorderInner() {
         ) : (
           <select
             value={selectedBoardId}
-            onChange={(e) => setSelectedBoardId(e.target.value)}
+            onChange={(e) => {
+              setSelectedBoardId(e.target.value);
+              localStorage.setItem(BOARD_STORAGE_KEY, e.target.value);
+            }}
             disabled={isBusy}
             className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-[#4f6ef7]/60 focus:ring-1 focus:ring-[#4f6ef7]/30 transition-colors disabled:opacity-50"
           >
@@ -123,6 +142,11 @@ export function VoiceRecorderInner() {
               <option key={b.id} value={b.id} className="bg-[#1a1f36]">{b.nickname}</option>
             ))}
           </select>
+          {selectedBoardId && (
+            <p className="text-xs text-white/30">
+              Cards will be sent to: <span className="text-white/50">{boards.find((b) => b.id === selectedBoardId)?.nickname}</span>
+            </p>
+          )}
         )}
       </div>
 

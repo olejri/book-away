@@ -18,6 +18,8 @@ export const env = createEnv({
     DATABASE_URL: z.string().url(),
     RESEND_API_KEY: z.string(),
     RESEND_FROM_EMAIL: z.string().email().default("onboarding@resend.dev"),
+    CLOUDFLARE_WORKER_URL: z.string().url(),
+    CLOUDFLARE_WORKER_API_KEY: z.string(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -42,6 +44,8 @@ export const env = createEnv({
     DATABASE_URL: process.env.DATABASE_URL,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,
+    CLOUDFLARE_WORKER_URL: process.env.CLOUDFLARE_WORKER_URL,
+    CLOUDFLARE_WORKER_API_KEY: process.env.CLOUDFLARE_WORKER_API_KEY,
     NODE_ENV: process.env.NODE_ENV,
   },
   /**

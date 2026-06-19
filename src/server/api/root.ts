@@ -1,6 +1,7 @@
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 import { settingsRouter } from "~/server/api/routers/settings";
 import { trelloRouter } from "~/server/api/routers/trello";
+import { speechRouter } from "~/server/api/routers/speech";
 
 /**
  * This is the primary router for your server.
@@ -10,6 +11,7 @@ import { trelloRouter } from "~/server/api/routers/trello";
 export const appRouter = createTRPCRouter({
   settings: settingsRouter,
   trello: trelloRouter,
+  speech: speechRouter,
 });
 
 // export type definition of API

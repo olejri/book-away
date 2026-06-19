@@ -8,7 +8,7 @@ export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user) redirect("/");
 
-  const settings = await api.settings.getTrelloEmail();
+  const boards = await api.settings.getBoardEmails();
 
   return (
     <div className="flex flex-col gap-6">
@@ -19,12 +19,11 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      {!settings?.trelloEmail ? (
+      {boards.length === 0 ? (
         <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-center">
-          <p className="font-semibold text-yellow-400">⚠️ No email configured</p>
+          <p className="font-semibold text-yellow-400">⚠️ No boards configured</p>
           <p className="mt-1 text-sm text-white/60">
-            Add your Trello board email (or personal email for testing) before
-            creating cards.
+            Add a Trello board email in Settings before creating cards.
           </p>
           <Link
             href="/settings"
@@ -35,8 +34,14 @@ export default async function DashboardPage() {
         </div>
       ) : (
         <div className="rounded-xl border border-green-500/20 bg-green-500/5 px-4 py-2 text-center">
-          <p className="text-xs text-white/40">Sending cards to</p>
-          <p className="text-sm font-medium text-green-400">{settings.trelloEmail}</p>
+          <p className="text-xs text-white/40">Boards configured</p>
+          <div className="mt-1 flex flex-wrap justify-center gap-2">
+            {boards.map((b) => (
+              <span key={b.id} className="text-sm font-medium text-green-400">
+                {b.nickname}
+              </span>
+            ))}
+          </div>
         </div>
       )}
 

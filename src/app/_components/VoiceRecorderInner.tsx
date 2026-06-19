@@ -22,6 +22,9 @@ export function VoiceRecorderInner() {
   const [description, setDescription] = useState("");
   const [memberInput, setMemberInput] = useState("");
   const [activeField, setActiveField] = useState<ActiveField>(null);
+  const [selectedBoardId, setSelectedBoardId] = useState<string>("");
+
+  const { data: boards = [] } = api.settings.getBoardEmails.useQuery();
 
   const [language, setLanguage] = useState<Language>(() => {
     if (typeof window === "undefined") return "nb-NO";
@@ -90,7 +93,8 @@ export function VoiceRecorderInner() {
 
   const handleSend = () => {
     if (!title.trim()) { toast.warning("Please add a card title first."); return; }
-    createCard.mutate({ title: title.trim(), description: description.trim() || undefined });
+    if (!selectedBoardId) { toast.warning("Please select a board first."); return; }
+    createCard.mutate({ boardEmailId: selectedBoardId, title: title.trim(), description: description.trim() || undefined });
   };
 
   const isRecording = recorderState === "recording";
@@ -99,6 +103,28 @@ export function VoiceRecorderInner() {
 
   return (
     <div className="flex flex-col gap-5">
+
+      {/* Board selector */}
+      <div className="flex flex-col gap-1">
+        <label className="text-xs font-medium text-white/60">Send to board</label>
+        {boards.length === 0 ? (
+          <p className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/30">
+            No boards configured — <a href="/settings" className="text-[#7b96fa] underline underline-offset-2">go to Settings</a> to add one.
+          </p>
+        ) : (
+          <select
+            value={selectedBoardId}
+            onChange={(e) => setSelectedBoardId(e.target.value)}
+            disabled={isBusy}
+            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-[#4f6ef7]/60 focus:ring-1 focus:ring-[#4f6ef7]/30 transition-colors disabled:opacity-50"
+          >
+            <option value="" disabled className="bg-[#1a1f36]">— pick a board —</option>
+            {boards.map((b) => (
+              <option key={b.id} value={b.id} className="bg-[#1a1f36]">{b.nickname}</option>
+            ))}
+          </select>
+        )}
+      </div>
 
       {/* Language selector */}
       <div className="flex items-center gap-3">

@@ -115,7 +115,8 @@ export const userSettings = createTable("user_settings", {
     .notNull()
     .unique()
     .references(() => users.id, { onDelete: "cascade" }),
-  trelloEmail: varchar("trello_email", { length: 255 }).notNull(),
+  // Legacy single-email field — kept nullable for existing rows
+  trelloEmail: varchar("trello_email", { length: 255 }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),
@@ -124,6 +125,28 @@ export const userSettings = createTable("user_settings", {
   ),
 });
 
-export const userSettingsRelations = relations(userSettings, ({ one }) => ({
+export const userSettingsRelations = relations(userSettings, ({ one, many }) => ({
   user: one(users, { fields: [userSettings.userId], references: [users.id] }),
+  boardEmails: many(trelloBoardEmails),
+}));
+
+// ─── Trello board emails (multiple per user) ──────────────────────────────────
+
+export const trelloBoardEmails = createTable("trello_board_email", {
+  id: varchar("id", { length: 255 })
+    .notNull()
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: varchar("user_id", { length: 255 })
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  nickname: varchar("nickname", { length: 100 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+});
+
+export const trelloBoardEmailsRelations = relations(trelloBoardEmails, ({ one }) => ({
+  user: one(users, { fields: [trelloBoardEmails.userId], references: [users.id] }),
 }));

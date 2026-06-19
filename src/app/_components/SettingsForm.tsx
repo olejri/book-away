@@ -4,89 +4,166 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import { api } from "~/trpc/react";
 
-interface Props {
-  currentEmail: string | null;
-}
-
-export function SettingsForm({ currentEmail }: Props) {
-  const [email, setEmail] = useState(currentEmail ?? "");
+export function SettingsForm() {
   const utils = api.useUtils();
+  const { data: boards = [], isLoading } = api.settings.getBoardEmails.useQuery();
 
-  const upsert = api.settings.upsertTrelloEmail.useMutation({
+  const [nickname, setNickname] = useState("");
+  const [email, setEmail] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editNickname, setEditNickname] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+
+  const invalidate = () => void utils.settings.getBoardEmails.invalidate();
+
+  const add = api.settings.addBoardEmail.useMutation({
     onSuccess: () => {
-      toast.success("✅ Email saved!");
-      void utils.settings.getTrelloEmail.invalidate();
+      toast.success("✅ Board added!");
+      setNickname(""); setEmail("");
+      invalidate();
     },
     onError: (err) => toast.error(err.message),
   });
 
-  const remove = api.settings.deleteTrelloEmail.useMutation({
+  const update = api.settings.updateBoardEmail.useMutation({
     onSuccess: () => {
-      setEmail("");
-      toast.success("Email removed.");
-      void utils.settings.getTrelloEmail.invalidate();
+      toast.success("✅ Saved!");
+      setEditingId(null);
+      invalidate();
     },
     onError: (err) => toast.error(err.message),
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const remove = api.settings.deleteBoardEmail.useMutation({
+    onSuccess: () => { toast.success("Board removed."); invalidate(); },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return toast.warning("Please enter an email address.");
-    upsert.mutate({ trelloEmail: email.trim() });
+    if (!nickname.trim()) return toast.warning("Please enter a nickname.");
+    if (!email.trim()) return toast.warning("Please enter an email.");
+    add.mutate({ nickname: nickname.trim(), email: email.trim() });
+  };
+
+  const startEdit = (id: string, n: string, e: string) => {
+    setEditingId(id); setEditNickname(n); setEditEmail(e);
+  };
+
+  const handleUpdate = (id: string) => {
+    update.mutate({ id, nickname: editNickname.trim(), email: editEmail.trim() });
   };
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Form card */}
+
+      {/* Board list */}
       <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-        <h2 className="text-lg font-semibold">Trello Board Email</h2>
+        <h2 className="text-lg font-semibold">Trello Board Emails</h2>
         <p className="mt-1 text-sm text-white/50">
-          Use your personal email for testing, or paste your Trello board
-          email-to-board address for production.
+          Add one entry per Trello board. Give each a nickname so you can pick the right board when creating a card.
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-4">
+        {isLoading && <p className="mt-4 text-sm text-white/30 animate-pulse">Loading…</p>}
+
+        {!isLoading && boards.length === 0 && (
+          <p className="mt-4 text-sm text-white/30">No boards yet — add one below.</p>
+        )}
+
+        {boards.length > 0 && (
+          <ul className="mt-4 flex flex-col gap-2">
+            {boards.map((board) => (
+              <li key={board.id} className="rounded-xl border border-white/10 bg-white/5 p-3">
+                {editingId === board.id ? (
+                  <div className="flex flex-col gap-2">
+                    <input
+                      value={editNickname}
+                      onChange={(e) => setEditNickname(e.target.value)}
+                      placeholder="Nickname"
+                      className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-white/30 outline-none focus:border-[#4f6ef7]/60 transition-colors"
+                    />
+                    <input
+                      value={editEmail}
+                      onChange={(e) => setEditEmail(e.target.value)}
+                      placeholder="board@boards.trello.com"
+                      className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-white/30 outline-none focus:border-[#4f6ef7]/60 transition-colors"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleUpdate(board.id)}
+                        disabled={update.isPending}
+                        className="flex-1 rounded-lg bg-[#4f6ef7] py-2 text-xs font-semibold text-white disabled:opacity-40"
+                      >
+                        {update.isPending ? "Saving…" : "Save"}
+                      </button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="rounded-lg border border-white/10 px-3 py-2 text-xs text-white/50 hover:text-white transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-white truncate">{board.nickname}</p>
+                      <p className="text-xs text-white/40 truncate">{board.email}</p>
+                    </div>
+                    <div className="flex shrink-0 gap-2">
+                      <button
+                        onClick={() => startEdit(board.id, board.nickname, board.email)}
+                        className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/50 hover:text-white transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => remove.mutate({ id: board.id })}
+                        disabled={remove.isPending}
+                        className="rounded-lg border border-red-500/30 px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* Add new board */}
+      <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+        <h2 className="text-base font-semibold">Add a board</h2>
+        <form onSubmit={handleAdd} className="mt-3 flex flex-col gap-3">
           <div className="flex flex-col gap-1">
-            <label htmlFor="trello-email" className="text-xs text-white/50">
-              Email address
-            </label>
+            <label className="text-xs text-white/50">Nickname</label>
             <input
-              id="trello-email"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              placeholder='e.g. "Incoming – Team Global"'
+              className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 outline-none focus:border-[#4f6ef7]/60 focus:ring-1 focus:ring-[#4f6ef7]/30 transition-colors"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-white/50">Board email</label>
+            <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="your-board@boards.trello.com"
               inputMode="email"
-              autoComplete="email"
-              required
               className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 outline-none focus:border-[#4f6ef7]/60 focus:ring-1 focus:ring-[#4f6ef7]/30 transition-colors"
             />
-            {currentEmail && (
-              <p className="text-xs text-white/40">
-                Current: {currentEmail}
-              </p>
-            )}
           </div>
-
-          <div className="flex gap-3">
-            <button
-              type="submit"
-              disabled={!email.trim() || upsert.isPending}
-              className="flex-1 rounded-xl bg-[#4f6ef7] py-3 text-sm font-semibold text-white hover:bg-[#3d5ce0] disabled:opacity-40 transition-colors"
-            >
-              {upsert.isPending ? "Saving…" : currentEmail ? "Update Email" : "Save Email"}
-            </button>
-            {currentEmail && (
-              <button
-                type="button"
-                onClick={() => remove.mutate()}
-                disabled={remove.isPending}
-                className="rounded-xl border border-red-500/30 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-colors"
-              >
-                {remove.isPending ? "…" : "Remove"}
-              </button>
-            )}
-          </div>
+          <button
+            type="submit"
+            disabled={!nickname.trim() || !email.trim() || add.isPending}
+            className="rounded-xl bg-[#4f6ef7] py-3 text-sm font-semibold text-white hover:bg-[#3d5ce0] disabled:opacity-40 transition-colors"
+          >
+            {add.isPending ? "Adding…" : "+ Add Board"}
+          </button>
         </form>
       </div>
 
@@ -98,61 +175,11 @@ export function SettingsForm({ currentEmail }: Props) {
           <li>Open the board sidebar and click <strong className="text-white/70">More</strong></li>
           <li>Click <strong className="text-white/70">Email-to-board Settings</strong></li>
           <li>Copy your unique board email address</li>
-          <li>
-            In that menu you can also choose which <strong className="text-white/70">list</strong> new
-            cards land in and whether they go to the top or bottom
-          </li>
+          <li>Give it a nickname like <em className="text-white/60">"Incoming – Team Global"</em> so you know which list it lands in</li>
         </ol>
         <p className="mt-3 text-xs text-white/30">
-          💡 Tip: Use your personal email first to test the flow without posting to Trello.
+          💡 Tip: Add multiple entries for the same board with different lists (top vs. bottom, different columns).
         </p>
-      </div>
-
-      {/* Email formatting tips */}
-      <div className="rounded-xl border border-[#4f6ef7]/20 bg-[#4f6ef7]/5 p-5">
-        <p className="text-sm font-semibold text-[#7b96fa]">✉️ How email becomes a Trello card</p>
-        <ul className="mt-3 space-y-2 text-sm text-white/60">
-          <li className="flex gap-2">
-            <span className="mt-0.5 shrink-0 text-[#7b96fa]">→</span>
-            <span>The <strong className="text-white/80">email subject</strong> becomes the card name</span>
-          </li>
-          <li className="flex gap-2">
-            <span className="mt-0.5 shrink-0 text-[#7b96fa]">→</span>
-            <span>The <strong className="text-white/80">email body</strong> becomes the card description</span>
-          </li>
-          <li className="flex gap-2">
-            <span className="mt-0.5 shrink-0 text-[#7b96fa]">→</span>
-            <span>Add <strong className="text-white/80">labels</strong> in the subject with <code className="rounded bg-white/10 px-1 text-xs">#labelname</code> or <code className="rounded bg-white/10 px-1 text-xs">#labelcolor</code> — use underscores for multi-word labels, e.g. <code className="rounded bg-white/10 px-1 text-xs">#To_Do</code></span>
-          </li>
-          <li className="flex gap-2">
-            <span className="mt-0.5 shrink-0 text-[#7b96fa]">→</span>
-            <span>Add <strong className="text-white/80">members</strong> with <code className="rounded bg-white/10 px-1 text-xs">@username</code> in the subject, or on its own line in the body</span>
-          </li>
-          <li className="flex gap-2">
-            <span className="mt-0.5 shrink-0 text-[#7b96fa]">→</span>
-            <span><strong className="text-white/80">Attachments</strong> are added to the card (up to 10 MB)</span>
-          </li>
-        </ul>
-      </div>
-
-      {/* Board vs card email note */}
-      <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-        <p className="text-sm font-semibold">📌 Good to know</p>
-        <div className="mt-2 space-y-2 text-sm text-white/50">
-          <p>
-            Every Trello board — and every individual card — has its own unique email address. The board
-            email creates new cards; a card&apos;s email adds comments to that specific card.
-          </p>
-          <p>
-            To get a <strong className="text-white/70">card&apos;s</strong> email address: open the card →
-            click <strong className="text-white/70">Share and more</strong> at the bottom of the card menu
-            → copy the email shown.
-          </p>
-          <p className="text-white/30">
-            ⚠️ Your board email is unique to <em>you</em> as a member — don&apos;t share it, otherwise
-            cards created by email will appear under your name.
-          </p>
-        </div>
       </div>
     </div>
   );

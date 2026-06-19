@@ -1,0 +1,19 @@
+name = "book-away-speech"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+
+# ── Secrets (set via CLI, never commit these) ──────────────────────────────
+# Run the following commands once before deploying:
+#
+#   wrangler secret put GOOGLE_SPEECH_API_KEY
+#   wrangler secret put GOOGLE_CLOUD_PROJECT_ID
+#   wrangler secret put WORKER_API_KEY
+#   wrangler secret put ALLOWED_ORIGIN
+#
+# GOOGLE_SPEECH_API_KEY  → Google Cloud API key with Speech-to-Text API enabled
+# GOOGLE_CLOUD_PROJECT_ID → your GCP project ID (e.g. "my-project-123")
+# WORKER_API_KEY         → a strong random secret (e.g. openssl rand -hex 32)
+#                          must match CLOUDFLARE_WORKER_API_KEY in Vercel env
+# ALLOWED_ORIGIN         → your Vercel domain (e.g. https://book-away.vercel.app)
+#                          use * only for local development
+

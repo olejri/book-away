@@ -1,6 +1,5 @@
 export interface Env {
   GOOGLE_SPEECH_API_KEY: string;
-  GOOGLE_CLOUD_PROJECT_ID: string;
   WORKER_API_KEY: string;
   ALLOWED_ORIGIN: string;
 }
@@ -89,10 +88,9 @@ export default {
       return jsonResponse({ error: "Audio file is too small or empty" }, 400, cors);
     }
 
-    // ── Call Google Speech-to-Text V2 ─────────────────────────────────────────
+    // ── Call Google Speech-to-Text V1 ─────────────────────────────────────────
     const base64Audio = arrayBufferToBase64(arrayBuffer);
-    const projectId = env.GOOGLE_CLOUD_PROJECT_ID;
-    const googleUrl = `https://speech.googleapis.com/v2/projects/${projectId}/locations/global/recognizers/_:recognize?key=${env.GOOGLE_SPEECH_API_KEY}`;
+    const googleUrl = `https://speech.googleapis.com/v1/speech:recognize?key=${env.GOOGLE_SPEECH_API_KEY}`;
 
     let googleResponse: Response;
     try {
@@ -100,17 +98,16 @@ export default {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          recognizer: `projects/${projectId}/locations/global/recognizers/_`,
           config: {
-            autoDecodingConfig: {},
-            languageCodes: [language],
-            model: "long",
-            features: {
-              enableAutomaticPunctuation: true,
-              enableSpokenPunctuation: false,
-            },
+            encoding: "WEBM_OPUS",
+            sampleRateHertz: 48000,
+            languageCode: language,
+            enableAutomaticPunctuation: true,
+            model: "latest_long",
           },
-          content: base64Audio,
+          audio: {
+            content: base64Audio,
+          },
         }),
       });
     } catch (err) {
@@ -144,4 +141,3 @@ export default {
     return jsonResponse({ transcript }, 200, cors);
   },
 };
-

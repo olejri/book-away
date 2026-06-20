@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect } from "react";
 import { toast } from "react-toastify";
 import { api } from "~/trpc/react";
 import { CardPreview } from "./CardPreview";
-import { normalizeVoiceInput, LABEL_COLOR_OPTIONS } from "./parseCardText";
+import { normalizeVoiceInput } from "./parseCardText";
 import { useAudioRecorder } from "./useAudioRecorder";
 
 type ActiveField = "title" | "description" | null;
@@ -31,12 +31,6 @@ export function VoiceRecorderInner() {
   const { data: boards = [] } = api.settings.getBoardEmails.useQuery();
   const { data: userLabels = [] } = api.settings.getLabels.useQuery();
   const { data: savedMembers = [] } = api.settings.getMembers.useQuery();
-
-  // Use user-defined labels if any, otherwise fall back to built-in color labels
-  const labelOptions: { name: string; hex: string }[] =
-    userLabels.length > 0
-      ? userLabels.map((l) => ({ name: l.name, hex: l.color }))
-      : LABEL_COLOR_OPTIONS;
 
   // Auto-select first board if stored selection no longer exists or nothing is stored
   useEffect(() => {
@@ -224,25 +218,29 @@ export function VoiceRecorderInner() {
           <p className="text-xs text-white/50">
             Add label <span className="text-white/30">(tap to append to title)</span>
           </p>
-          {userLabels.length === 0 && (
-            <a href="/settings" className="text-xs text-[#7b96fa] hover:underline">
-              Customise labels →
-            </a>
-          )}
+          <a href="/settings" className="text-xs text-[#7b96fa] hover:underline">
+            Customise labels →
+          </a>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {labelOptions.map(({ name, hex }) => (
-            <button
-              key={name}
-              type="button"
-              onClick={() => addLabel(name)}
-              style={{ backgroundColor: hex }}
-              className="rounded-full px-3 py-1 text-xs font-semibold text-white shadow-sm hover:opacity-90 active:scale-95 transition-all"
-            >
-              {name}
-            </button>
-          ))}
-        </div>
+        {userLabels.length === 0 ? (
+          <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/35">
+            No custom labels yet. Add labels in Settings to use quick label buttons.
+          </p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {userLabels.map((label) => (
+              <button
+                key={label.id}
+                type="button"
+                onClick={() => addLabel(label.name)}
+                style={{ backgroundColor: label.color }}
+                className="rounded-full px-3 py-1 text-xs font-semibold text-white shadow-sm hover:opacity-90 active:scale-95 transition-all"
+              >
+                {label.name}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Member input */}

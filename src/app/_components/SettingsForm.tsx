@@ -74,6 +74,55 @@ export function SettingsForm() {
     setEditLabelColor(color);
   };
 
+  // ── Members state ────────────────────────────────────────────────────────────
+  const { data: members = [], isLoading: membersLoading } = api.settings.getMembers.useQuery();
+  const [memberUsername, setMemberUsername] = useState("");
+  const [memberDisplayName, setMemberDisplayName] = useState("");
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+  const [editMemberUsername, setEditMemberUsername] = useState("");
+  const [editMemberDisplayName, setEditMemberDisplayName] = useState("");
+
+  const invalidateMembers = () => void utils.settings.getMembers.invalidate();
+
+  const addMemberMutation = api.settings.addMember.useMutation({
+    onSuccess: () => {
+      toast.success("✅ Member saved!");
+      setMemberUsername("");
+      setMemberDisplayName("");
+      invalidateMembers();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const updateMember = api.settings.updateMember.useMutation({
+    onSuccess: () => {
+      toast.success("✅ Member updated!");
+      setEditingMemberId(null);
+      invalidateMembers();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const removeMember = api.settings.deleteMember.useMutation({
+    onSuccess: () => { toast.success("Member removed."); invalidateMembers(); },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const handleAddMember = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!memberUsername.trim()) return toast.warning("Please enter a username.");
+    addMemberMutation.mutate({
+      username: memberUsername.trim().replace(/^@/, ""),
+      displayName: memberDisplayName.trim() || undefined,
+    });
+  };
+
+  const startEditMember = (id: string, username: string, displayName: string | null) => {
+    setEditingMemberId(id);
+    setEditMemberUsername(username);
+    setEditMemberDisplayName(displayName ?? "");
+  };
+
   const invalidate = () => void utils.settings.getBoardEmails.invalidate();
 
   const add = api.settings.addBoardEmail.useMutation({
@@ -376,6 +425,124 @@ export function SettingsForm() {
             className="rounded-xl bg-[#4f6ef7] py-3 text-sm font-semibold text-white hover:bg-[#3d5ce0] disabled:opacity-40 transition-colors"
           >
             {addLabel.isPending ? "Adding…" : "+ Add Label"}
+          </button>
+        </form>
+      </div>
+
+      {/* ── Saved Members ─────────────────────────────────────────────────── */}
+      <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+        <h2 className="text-lg font-semibold">Saved Members</h2>
+        <p className="mt-1 text-sm text-white/50">
+          Save Trello usernames you assign often. They appear as quick-tap buttons when creating a card.
+        </p>
+
+        {membersLoading && <p className="mt-4 text-sm text-white/30 animate-pulse">Loading…</p>}
+
+        {!membersLoading && members.length === 0 && (
+          <p className="mt-4 text-sm text-white/30">No saved members yet — add one below.</p>
+        )}
+
+        {members.length > 0 && (
+          <ul className="mt-4 flex flex-col gap-2">
+            {members.map((member) => (
+              <li key={member.id} className="rounded-xl border border-white/10 bg-white/5 p-3">
+                {editingMemberId === member.id ? (
+                  <div className="flex flex-col gap-2">
+                    <input
+                      value={editMemberUsername}
+                      onChange={(e) => setEditMemberUsername(e.target.value)}
+                      placeholder="username (without @)"
+                      className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-white/30 outline-none focus:border-[#4f6ef7]/60 transition-colors"
+                    />
+                    <input
+                      value={editMemberDisplayName}
+                      onChange={(e) => setEditMemberDisplayName(e.target.value)}
+                      placeholder="Display name (optional)"
+                      className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-white/30 outline-none focus:border-[#4f6ef7]/60 transition-colors"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() =>
+                          updateMember.mutate({
+                            id: member.id,
+                            username: editMemberUsername.trim().replace(/^@/, ""),
+                            displayName: editMemberDisplayName.trim() || undefined,
+                          })
+                        }
+                        disabled={updateMember.isPending}
+                        className="flex-1 rounded-lg bg-[#4f6ef7] py-2 text-xs font-semibold text-white disabled:opacity-40"
+                      >
+                        {updateMember.isPending ? "Saving…" : "Save"}
+                      </button>
+                      <button
+                        onClick={() => setEditingMemberId(null)}
+                        className="rounded-lg border border-white/10 px-3 py-2 text-xs text-white/50 hover:text-white transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-white">
+                        <span className="text-[#7b96fa]">@</span>{member.username}
+                      </p>
+                      {member.displayName && (
+                        <p className="text-xs text-white/40">{member.displayName}</p>
+                      )}
+                    </div>
+                    <div className="flex shrink-0 gap-2">
+                      <button
+                        onClick={() => startEditMember(member.id, member.username, member.displayName)}
+                        className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/50 hover:text-white transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => removeMember.mutate({ id: member.id })}
+                        disabled={removeMember.isPending}
+                        className="rounded-lg border border-red-500/30 px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* Add new member */}
+      <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+        <h2 className="text-base font-semibold">Add a member</h2>
+        <form onSubmit={handleAddMember} className="mt-3 flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-white/50">Trello username</label>
+            <input
+              value={memberUsername}
+              onChange={(e) => setMemberUsername(e.target.value)}
+              placeholder='e.g. "johndoe" (without @)'
+              className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 outline-none focus:border-[#4f6ef7]/60 focus:ring-1 focus:ring-[#4f6ef7]/30 transition-colors"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-white/50">Display name <span className="text-white/30">(optional — shown in the button)</span></label>
+            <input
+              value={memberDisplayName}
+              onChange={(e) => setMemberDisplayName(e.target.value)}
+              placeholder='e.g. "John Doe"'
+              className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 outline-none focus:border-[#4f6ef7]/60 focus:ring-1 focus:ring-[#4f6ef7]/30 transition-colors"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={!memberUsername.trim() || addMemberMutation.isPending}
+            className="rounded-xl bg-[#4f6ef7] py-3 text-sm font-semibold text-white hover:bg-[#3d5ce0] disabled:opacity-40 transition-colors"
+          >
+            {addMemberMutation.isPending ? "Adding…" : "+ Add Member"}
           </button>
         </form>
       </div>

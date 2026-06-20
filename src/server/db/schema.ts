@@ -172,3 +172,24 @@ export const userLabelsRelations = relations(userLabels, ({ one }) => ({
   user: one(users, { fields: [userLabels.userId], references: [users.id] }),
 }));
 
+// ─── Saved Trello members (usernames used frequently) ────────────────────────
+
+export const userMembers = createTable("user_member", {
+  id: varchar("id", { length: 255 })
+    .notNull()
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: varchar("user_id", { length: 255 })
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  username: varchar("username", { length: 100 }).notNull(),
+  displayName: varchar("display_name", { length: 100 }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+});
+
+export const userMembersRelations = relations(userMembers, ({ one }) => ({
+  user: one(users, { fields: [userMembers.userId], references: [users.id] }),
+}));
+

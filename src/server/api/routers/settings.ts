@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { userSettings, trelloBoardEmails, userLabels } from "~/server/db/schema";
+import { userSettings, trelloBoardEmails, userLabels, userMembers } from "~/server/db/schema";
 
 export const settingsRouter = createTRPCRouter({
   // ── Legacy single-email (kept for backward compat) ────────────────────────
@@ -139,6 +139,56 @@ export const settingsRouter = createTRPCRouter({
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db.delete(userLabels).where(eq(userLabels.id, input.id));
+      return { success: true };
+    }),
+
+  // ── Saved members ─────────────────────────────────────────────────────────
+  getMembers: protectedProcedure.query(async ({ ctx }) => {
+    return ctx.db.query.userMembers.findMany({
+      where: eq(userMembers.userId, ctx.session.user.id),
+      orderBy: (t, { asc }) => [asc(t.createdAt)],
+    });
+  }),
+
+  addMember: protectedProcedure
+    .input(
+      z.object({
+        username: z.string().min(1).max(100),
+        displayName: z.string().max(100).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.insert(userMembers).values({
+        userId: ctx.session.user.id,
+        username: input.username,
+        displayName: input.displayName ?? null,
+      });
+      return { success: true };
+    }),
+
+  updateMember: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        username: z.string().min(1).max(100).optional(),
+        displayName: z.string().max(100).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db
+        .update(userMembers)
+        .set({
+          ...(input.username && { username: input.username }),
+          ...(input.displayName !== undefined && { displayName: input.displayName || null }),
+        })
+        .where(eq(userMembers.id, input.id));
+      return { success: true };
+    }),
+
+  deleteMember: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.delete(userMembers).where(eq(userMembers.id, input.id));
       return { success: true };
     }),
 });

@@ -30,6 +30,7 @@ export function VoiceRecorderInner() {
 
   const { data: boards = [] } = api.settings.getBoardEmails.useQuery();
   const { data: userLabels = [] } = api.settings.getLabels.useQuery();
+  const { data: savedMembers = [] } = api.settings.getMembers.useQuery();
 
   // Use user-defined labels if any, otherwise fall back to built-in color labels
   const labelOptions: { name: string; hex: string }[] =
@@ -246,7 +247,37 @@ export function VoiceRecorderInner() {
 
       {/* Member input */}
       <div className="flex flex-col gap-2">
-        <p className="text-xs text-white/50">Add member <span className="text-white/30">(type username then tap +)</span></p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-white/50">
+            Add member <span className="text-white/30">(tap to append, or type below)</span>
+          </p>
+          {savedMembers.length === 0 && (
+            <a href="/settings" className="text-xs text-[#7b96fa] hover:underline">
+              Save members →
+            </a>
+          )}
+        </div>
+
+        {/* Saved member quick-tap buttons */}
+        {savedMembers.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {savedMembers.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => {
+                  const token = `@${m.username}`;
+                  setTitle((prev) => (prev.trim() ? `${prev.trim()} ${token}` : token));
+                }}
+                className="rounded-full border border-[#7b96fa]/30 bg-[#7b96fa]/10 px-3 py-1 text-xs font-semibold text-[#7b96fa] hover:bg-[#7b96fa]/20 active:scale-95 transition-all"
+              >
+                @{m.displayName ?? m.username}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Manual input fallback */}
         <div className="flex gap-2">
           <input
             type="text"

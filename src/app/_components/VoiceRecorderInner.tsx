@@ -145,11 +145,6 @@ export function VoiceRecorderInner() {
                 <option key={b.id} value={b.id} className="bg-[#1a1f36]">{b.nickname}</option>
               ))}
             </select>
-            {selectedBoardId && (
-              <p className="text-xs text-white/30">
-                Cards will be sent to: <span className="text-white/50">{boards.find((b) => b.id === selectedBoardId)?.nickname}</span>
-              </p>
-            )}
           </>
         )}
       </div>
@@ -218,9 +213,6 @@ export function VoiceRecorderInner() {
           <p className="text-xs text-white/50">
             Add label <span className="text-white/30">(tap to append to title)</span>
           </p>
-          <a href="/settings" className="text-xs text-[#7b96fa] hover:underline">
-            Customise labels →
-          </a>
         </div>
         {userLabels.length === 0 ? (
           <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/35">
@@ -274,26 +266,6 @@ export function VoiceRecorderInner() {
             ))}
           </div>
         )}
-
-        {/* Manual input fallback */}
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={memberInput}
-            onChange={(e) => setMemberInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && addMember()}
-            placeholder="username"
-            className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-white/25 outline-none focus:border-[#4f6ef7]/60 transition-colors"
-          />
-          <button
-            type="button"
-            onClick={addMember}
-            disabled={!memberInput.trim()}
-            className="rounded-xl bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20 disabled:opacity-40 transition-colors"
-          >
-            + Add
-          </button>
-        </div>
       </div>
 
       {/* Description field */}
@@ -332,18 +304,6 @@ export function VoiceRecorderInner() {
           maxLength={2000}
         />
         {isTranscribing && activeField === "description" && <TranscribingIndicator />}
-      </div>
-
-      {/* Voice tips */}
-      <div className="rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3 text-xs text-white/40">
-        <p className="mb-1 font-medium text-white/50">Voice tips — you can say:</p>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
-          <p><span className="text-[#7b96fa]">&ldquo;hashtag green&rdquo;</span> → #green</p>
-          <p><span className="text-[#7b96fa]">&ldquo;label red&rdquo;</span> → #red</p>
-          <p><span className="text-[#7b96fa]">&ldquo;assign john&rdquo;</span> → @john</p>
-          <p><span className="text-[#7b96fa]">&ldquo;mention sarah&rdquo;</span> → @sarah</p>
-        </div>
-        <p className="mt-1 text-white/25">Powered by Google Speech-to-Text — Norwegian &amp; English.</p>
       </div>
 
       {/* Live preview */}

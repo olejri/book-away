@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { userSettings, trelloBoardEmails } from "~/server/db/schema";
+import { userSettings, trelloBoardEmails, userLabels } from "~/server/db/schema";
 
 export const settingsRouter = createTRPCRouter({
   // ── Legacy single-email (kept for backward compat) ────────────────────────
@@ -89,6 +89,56 @@ export const settingsRouter = createTRPCRouter({
       await ctx.db
         .delete(trelloBoardEmails)
         .where(eq(trelloBoardEmails.id, input.id));
+      return { success: true };
+    }),
+
+  // ── User-defined labels ───────────────────────────────────────────────────
+  getLabels: protectedProcedure.query(async ({ ctx }) => {
+    return ctx.db.query.userLabels.findMany({
+      where: eq(userLabels.userId, ctx.session.user.id),
+      orderBy: (t, { asc }) => [asc(t.createdAt)],
+    });
+  }),
+
+  addLabel: protectedProcedure
+    .input(
+      z.object({
+        name: z.string().min(1).max(100),
+        color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid hex color"),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.insert(userLabels).values({
+        userId: ctx.session.user.id,
+        name: input.name,
+        color: input.color,
+      });
+      return { success: true };
+    }),
+
+  updateLabel: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        name: z.string().min(1).max(100).optional(),
+        color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid hex color").optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db
+        .update(userLabels)
+        .set({
+          ...(input.name && { name: input.name }),
+          ...(input.color && { color: input.color }),
+        })
+        .where(eq(userLabels.id, input.id));
+      return { success: true };
+    }),
+
+  deleteLabel: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.delete(userLabels).where(eq(userLabels.id, input.id));
       return { success: true };
     }),
 });

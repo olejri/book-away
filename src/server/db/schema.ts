@@ -150,3 +150,25 @@ export const trelloBoardEmails = createTable("trello_board_email", {
 export const trelloBoardEmailsRelations = relations(trelloBoardEmails, ({ one }) => ({
   user: one(users, { fields: [trelloBoardEmails.userId], references: [users.id] }),
 }));
+
+// ─── User-defined labels ──────────────────────────────────────────────────────
+
+export const userLabels = createTable("user_label", {
+  id: varchar("id", { length: 255 })
+    .notNull()
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: varchar("user_id", { length: 255 })
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 100 }).notNull(),
+  color: varchar("color", { length: 7 }).notNull().default("#4f6ef7"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+});
+
+export const userLabelsRelations = relations(userLabels, ({ one }) => ({
+  user: one(users, { fields: [userLabels.userId], references: [users.id] }),
+}));
+

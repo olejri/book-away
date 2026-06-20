@@ -29,6 +29,13 @@ export function VoiceRecorderInner() {
   });
 
   const { data: boards = [] } = api.settings.getBoardEmails.useQuery();
+  const { data: userLabels = [] } = api.settings.getLabels.useQuery();
+
+  // Use user-defined labels if any, otherwise fall back to built-in color labels
+  const labelOptions: { name: string; hex: string }[] =
+    userLabels.length > 0
+      ? userLabels.map((l) => ({ name: l.name, hex: l.color }))
+      : LABEL_COLOR_OPTIONS;
 
   // Auto-select first board if stored selection no longer exists or nothing is stored
   useEffect(() => {
@@ -212,15 +219,24 @@ export function VoiceRecorderInner() {
 
       {/* Label picker */}
       <div className="flex flex-col gap-2">
-        <p className="text-xs text-white/50">Add label <span className="text-white/30">(tap to append to title)</span></p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-white/50">
+            Add label <span className="text-white/30">(tap to append to title)</span>
+          </p>
+          {userLabels.length === 0 && (
+            <a href="/settings" className="text-xs text-[#7b96fa] hover:underline">
+              Customise labels →
+            </a>
+          )}
+        </div>
         <div className="flex flex-wrap gap-2">
-          {LABEL_COLOR_OPTIONS.map(({ name, hex }) => (
+          {labelOptions.map(({ name, hex }) => (
             <button
               key={name}
               type="button"
               onClick={() => addLabel(name)}
               style={{ backgroundColor: hex }}
-              className="rounded-full px-3 py-1 text-xs font-semibold text-white shadow-sm hover:opacity-90 active:scale-95 transition-all capitalize"
+              className="rounded-full px-3 py-1 text-xs font-semibold text-white shadow-sm hover:opacity-90 active:scale-95 transition-all"
             >
               {name}
             </button>

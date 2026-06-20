@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { api } from "~/trpc/react";
+import { SkeletonLoader } from "./SkeletonLoader";
 
 // Standard Trello-compatible colors
 const TRELLO_COLORS: { name: string; hex: string }[] = [
@@ -173,7 +174,11 @@ export function SettingsForm() {
           Add one entry per Trello board. Give each a nickname so you can pick the right board when creating a card.
         </p>
 
-        {isLoading && <p className="mt-4 text-sm text-white/30 animate-pulse">Loading…</p>}
+        {isLoading && (
+          <div className="mt-4">
+            <SkeletonLoader />
+          </div>
+        )}
 
         {!isLoading && boards.length === 0 && (
           <p className="mt-4 text-sm text-white/30">No boards yet — add one below.</p>
@@ -299,7 +304,11 @@ export function SettingsForm() {
           <code className="rounded bg-white/10 px-1 text-xs text-white/70">#name</code> to the card title so Trello applies the matching label automatically.
         </p>
 
-        {labelsLoading && <p className="mt-4 text-sm text-white/30 animate-pulse">Loading…</p>}
+        {labelsLoading && (
+          <div className="mt-4">
+            <SkeletonLoader />
+          </div>
+        )}
 
         {!labelsLoading && labels.length === 0 && (
           <p className="mt-4 text-sm text-white/30">No labels yet — add one below.</p>
@@ -436,7 +445,11 @@ export function SettingsForm() {
           Save Trello usernames you assign often. They appear as quick-tap buttons when creating a card.
         </p>
 
-        {membersLoading && <p className="mt-4 text-sm text-white/30 animate-pulse">Loading…</p>}
+        {membersLoading && (
+          <div className="mt-4">
+            <SkeletonLoader />
+          </div>
+        )}
 
         {!membersLoading && members.length === 0 && (
           <p className="mt-4 text-sm text-white/30">No saved members yet — add one below.</p>

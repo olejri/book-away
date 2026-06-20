@@ -14,7 +14,7 @@ export function CardPreview({ title, description }: Props) {
 
   return (
     <div className="w-full">
-      <p className="mb-2 text-xs text-white/40">Card preview</p>
+      <p className="mb-2 text-xs text-white/40">Draft preview</p>
 
       {/* Trello-style card */}
       <div className="rounded-lg bg-[#23272b] p-3 shadow-lg ring-1 ring-white/10">

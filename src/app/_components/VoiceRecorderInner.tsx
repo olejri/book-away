@@ -81,7 +81,7 @@ export function VoiceRecorderInner() {
 
   const createCard = api.trello.createCard.useMutation({
     onSuccess: () => {
-      toast.success("Trello card created! 🎉");
+      toast.success("VoiceDraft sent! 🎉");
       setTitle(""); setDescription(""); setMemberInput("");
       setActiveField(null); reset();
     },
@@ -110,8 +110,8 @@ export function VoiceRecorderInner() {
   };
 
   const handleSend = () => {
-    if (!title.trim()) { toast.warning("Please add a card title first."); return; }
-    if (!selectedBoardId) { toast.warning("Please select a board first."); return; }
+    if (!title.trim()) { toast.warning("Please add a title first."); return; }
+    if (!selectedBoardId) { toast.warning("Please select a destination first."); return; }
     createCard.mutate({ boardEmailId: selectedBoardId, title: title.trim(), description: description.trim() || undefined });
   };
 
@@ -124,10 +124,10 @@ export function VoiceRecorderInner() {
 
       {/* Board selector */}
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-white/60">Send to board</label>
+        <label className="text-xs font-medium text-white/60">Send to</label>
         {boards.length === 0 ? (
           <p className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/30">
-            No boards configured — <a href="/settings" className="text-[#7b96fa] underline underline-offset-2">go to Settings</a> to add one.
+            No destinations configured — <a href="/settings" className="text-[#7b96fa] underline underline-offset-2">go to Settings</a> to add one.
           </p>
         ) : (
           <>
@@ -140,7 +140,7 @@ export function VoiceRecorderInner() {
               disabled={isBusy}
               className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-[#4f6ef7]/60 focus:ring-1 focus:ring-[#4f6ef7]/30 transition-colors disabled:opacity-50"
             >
-              <option value="" disabled className="bg-[#1a1f36]">— pick a board —</option>
+              <option value="" disabled className="bg-[#1a1f36]">— pick a destination —</option>
               {boards.map((b) => (
                 <option key={b.id} value={b.id} className="bg-[#1a1f36]">{b.nickname}</option>
               ))}
@@ -175,7 +175,7 @@ export function VoiceRecorderInner() {
       <div className="flex flex-col gap-1">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <label className="text-xs font-medium text-white/60">Card Title</label>
+            <label className="text-xs font-medium text-white/60">Title</label>
             {title && (
               <button type="button" onClick={() => setTitle("")} className="text-xs text-white/30 hover:text-white/60 transition-colors">✕ clear</button>
             )}
@@ -273,7 +273,7 @@ export function VoiceRecorderInner() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <label className="text-xs font-medium text-white/60">
-              Description <span className="text-white/30">(card body — optional)</span>
+              Description <span className="text-white/30">(optional)</span>
             </label>
             {description && (
               <button type="button" onClick={() => setDescription("")} className="text-xs text-white/30 hover:text-white/60 transition-colors">✕ clear</button>
@@ -323,7 +323,7 @@ export function VoiceRecorderInner() {
           disabled={!title.trim() || isBusy || createCard.isPending}
           className="flex-1 rounded-xl bg-[#4f6ef7] py-3 text-sm font-semibold text-white hover:bg-[#3d5ce0] disabled:opacity-40 transition-colors"
         >
-          {createCard.isPending ? "Sending…" : "Create Card"}
+          {createCard.isPending ? "Sending…" : "Send VoiceDraft"}
         </button>
       </div>
     </div>

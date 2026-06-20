@@ -17,7 +17,7 @@ export default async function DashboardPage() {
       </div>
 
       <div className="rounded-xl border border-white/10 bg-white/5 p-6">
-        <h2 className="mb-6 text-lg font-semibold">Create a Card</h2>
+        <h2 className="mb-6 text-lg font-semibold">Create a VoiceDraft</h2>
         <VoiceRecorder />
       </div>
     </div>

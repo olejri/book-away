@@ -10,8 +10,8 @@ import { Providers } from "./providers";
 import { Navbar } from "./_components/Navbar";
 
 export const metadata: Metadata = {
-  title: "Trello Voice",
-  description: "Create Trello cards with your voice",
+  title: "VoiceDraft",
+  description: "Speak your idea. Send it anywhere.",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 

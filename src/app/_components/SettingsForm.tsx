@@ -169,9 +169,9 @@ export function SettingsForm() {
 
       {/* Board list */}
       <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-        <h2 className="text-lg font-semibold">Trello Board Emails</h2>
+        <h2 className="text-lg font-semibold">Destination Emails</h2>
         <p className="mt-1 text-sm text-white/50">
-          Add one entry per Trello board. Give each a nickname so you can pick the right board when creating a card.
+          Add one entry per destination. Give each a nickname so you can pick the right address when sending a VoiceDraft.
         </p>
 
         {isLoading && (
@@ -181,7 +181,7 @@ export function SettingsForm() {
         )}
 
         {!isLoading && boards.length === 0 && (
-          <p className="mt-4 text-sm text-white/30">No boards yet — add one below.</p>
+          <p className="mt-4 text-sm text-white/30">No destinations yet — add one below.</p>
         )}
 
         {boards.length > 0 && (
@@ -199,7 +199,7 @@ export function SettingsForm() {
                     <input
                       value={editEmail}
                       onChange={(e) => setEditEmail(e.target.value)}
-                      placeholder="board@boards.trello.com"
+                      placeholder="destination@example.com"
                       className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-white/30 outline-none focus:border-[#4f6ef7]/60 transition-colors"
                     />
                     <div className="flex gap-2">
@@ -261,12 +261,12 @@ export function SettingsForm() {
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-white/50">Board email</label>
+            <label className="text-xs text-white/50">Destination email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="your-board@boards.trello.com"
+              placeholder="e.g. destination@example.com"
               inputMode="email"
               className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 outline-none focus:border-[#4f6ef7]/60 focus:ring-1 focus:ring-[#4f6ef7]/30 transition-colors"
             />
@@ -283,16 +283,14 @@ export function SettingsForm() {
 
       {/* How-to card */}
       <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-        <p className="text-sm font-semibold">How to find your Trello board email</p>
+        <p className="text-sm font-semibold">How to find your destination email</p>
         <ol className="mt-2 list-decimal space-y-1.5 pl-4 text-sm text-white/50">
-          <li>Open your Trello board</li>
-          <li>Open the board sidebar and click <strong className="text-white/70">More</strong></li>
-          <li>Click <strong className="text-white/70">Email-to-board Settings</strong></li>
-          <li>Copy your unique board email address</li>
-          <li>Give it a nickname like <em className="text-white/60">&ldquo;Incoming – Team Global&rdquo;</em> so you know which list it lands in</li>
+          <li>Get the email address you want VoiceDrafts sent to</li>
+          <li>This can be any email — a project board, a team inbox, or a personal address</li>
+          <li>Give it a nickname like <em className="text-white/60">&ldquo;Team Inbox&rdquo;</em> so you know where it goes</li>
         </ol>
         <p className="mt-3 text-xs text-white/30">
-          💡 Tip: Add multiple entries for the same board with different lists (top vs. bottom, different columns).
+          💡 Tip: Add multiple destinations to send drafts to different people or workflows.
         </p>
       </div>
 
@@ -300,7 +298,7 @@ export function SettingsForm() {
       <div className="rounded-xl border border-white/10 bg-white/5 p-5">
         <h2 className="text-lg font-semibold">Custom Labels</h2>
         <p className="mt-1 text-sm text-white/50">
-          Define labels that match your Trello board. The label name is appended as{" "}
+          Define labels that match your workflow. The label name is appended as{" "}
           <code className="rounded bg-white/10 px-1 text-xs text-white/70">#name</code> to the card title so Trello applies the matching label automatically.
         </p>
 
@@ -442,7 +440,7 @@ export function SettingsForm() {
       <div className="rounded-xl border border-white/10 bg-white/5 p-5">
         <h2 className="text-lg font-semibold">Saved Members</h2>
         <p className="mt-1 text-sm text-white/50">
-          Save Trello usernames you assign often. They appear as quick-tap buttons when creating a card.
+          Save assignees you use often. They appear as quick-tap buttons when creating a VoiceDraft.
         </p>
 
         {membersLoading && (
@@ -533,7 +531,7 @@ export function SettingsForm() {
         <h2 className="text-base font-semibold">Add a member</h2>
         <form onSubmit={handleAddMember} className="mt-3 flex flex-col gap-3">
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-white/50">Trello username</label>
+            <label className="text-xs text-white/50">Username</label>
             <input
               value={memberUsername}
               onChange={(e) => setMemberUsername(e.target.value)}

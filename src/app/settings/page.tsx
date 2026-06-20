@@ -11,7 +11,7 @@ export default async function SettingsPage() {
       <div>
         <h1 className="text-2xl font-bold">Settings</h1>
         <p className="text-sm text-foreground/60">
-          Manage your Trello board emails
+          Manage your destination email addresses
         </p>
       </div>
 

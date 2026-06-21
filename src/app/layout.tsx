@@ -8,6 +8,7 @@ import { ToastContainer } from "react-toastify";
 import { TRPCReactProvider } from "~/trpc/react";
 import { Providers } from "./providers";
 import { Navbar } from "./_components/Navbar";
+import { ServiceWorkerRegister } from "./_components/ServiceWorkerRegister";
 
 export const metadata: Metadata = {
   title: "VoiceDraft",
@@ -38,6 +39,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${GeistSans.variable} dark`}>
       <body className="min-h-screen bg-background font-sans text-foreground">
+        <ServiceWorkerRegister />
         <TRPCReactProvider>
           <Providers>
             <Navbar />

@@ -4,6 +4,11 @@ const config = {
   "parserOptions": {
     "project": true
   },
+  // Static service worker shipped from /public — it uses browser worker
+  // globals that aren't part of the typed TS project, so skip type-aware lint.
+  "ignorePatterns": [
+    "public/sw.js"
+  ],
   "plugins": [
     "@typescript-eslint",
     "drizzle"

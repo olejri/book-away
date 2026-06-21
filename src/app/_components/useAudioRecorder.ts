@@ -1,7 +1,16 @@
 "use client";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 
 export type RecorderState = "idle" | "recording" | "transcribing" | "error";
+
+/**
+ * Hard client-side recording limit (seconds).
+ *
+ * This is a *guesstimate* safety cap: Google's synchronous speech:recognize
+ * endpoint rejects audio longer than ~60s, so we auto-stop at 50s to leave a
+ * comfortable margin and give the user a clear visual countdown.
+ */
+export const MAX_RECORDING_SECONDS = 50;
 
 interface Options {
   workerUrl: string;
@@ -26,14 +35,33 @@ export function useAudioRecorder({
   onError,
 }: Options) {
   const [state, setState] = useState<RecorderState>("idle");
+  const [secondsLeft, setSecondsLeft] = useState(MAX_RECORDING_SECONDS);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+
+  // Countdown timer handles (interval tick + hard auto-stop timeout)
+  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const autoStopRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Always-fresh refs so onstop never captures a stale callback
   const onTranscriptRef = useRef(onTranscript);
   const onErrorRef = useRef(onError);
   onTranscriptRef.current = onTranscript;
   onErrorRef.current = onError;
+
+  const clearTimers = useCallback(() => {
+    if (tickRef.current) {
+      clearInterval(tickRef.current);
+      tickRef.current = null;
+    }
+    if (autoStopRef.current) {
+      clearTimeout(autoStopRef.current);
+      autoStopRef.current = null;
+    }
+  }, []);
+
+  // Tidy up timers if the component unmounts mid-recording
+  useEffect(() => clearTimers, [clearTimers]);
 
   const start = useCallback(async () => {
     chunksRef.current = [];
@@ -79,6 +107,10 @@ export function useAudioRecorder({
     };
 
     mediaRecorder.onstop = async () => {
+      // Stop the countdown the moment recording ends
+      clearTimers();
+      setSecondsLeft(MAX_RECORDING_SECONDS);
+
       // Stop all mic tracks immediately
       stream.getTracks().forEach((t) => t.stop());
 
@@ -139,19 +171,40 @@ export function useAudioRecorder({
 
     mediaRecorder.start();
     setState("recording");
-  }, [workerUrl, apiKey, language]); // language/url/key are stable after config loads
+
+    // ── Start client-side countdown ───────────────────────────────────────
+    // Smooth 100ms ticks for the shrinking bar, plus a hard auto-stop so we
+    // never exceed the speech API's ~60s sync limit.
+    const startedAt = Date.now();
+    setSecondsLeft(MAX_RECORDING_SECONDS);
+
+    tickRef.current = setInterval(() => {
+      const elapsed = (Date.now() - startedAt) / 1000;
+      const remaining = Math.max(0, MAX_RECORDING_SECONDS - elapsed);
+      setSecondsLeft(remaining);
+    }, 100);
+
+    autoStopRef.current = setTimeout(() => {
+      if (mediaRecorderRef.current?.state === "recording") {
+        mediaRecorderRef.current.stop();
+      }
+    }, MAX_RECORDING_SECONDS * 1000);
+  }, [workerUrl, apiKey, language, clearTimers]); // stable after config loads
 
   const stop = useCallback(() => {
+    clearTimers();
     if (mediaRecorderRef.current?.state === "recording") {
       mediaRecorderRef.current.stop();
     }
-  }, []);
+  }, [clearTimers]);
 
   const reset = useCallback(() => {
+    clearTimers();
     setState("idle");
+    setSecondsLeft(MAX_RECORDING_SECONDS);
     chunksRef.current = [];
-  }, []);
+  }, [clearTimers]);
 
-  return { state, start, stop, reset };
+  return { state, secondsLeft, maxSeconds: MAX_RECORDING_SECONDS, start, stop, reset };
 }
 

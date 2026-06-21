@@ -74,7 +74,7 @@ export function VoiceRecorderInner() {
     toast.error(msg);
   }, []);
 
-  const { state: recorderState, start, stop, reset } = useAudioRecorder({
+  const { state: recorderState, secondsLeft, maxSeconds, start, stop, reset } = useAudioRecorder({
     workerUrl: workerConfig?.workerUrl ?? "",
     apiKey: workerConfig?.apiKey ?? "",
     language,
@@ -216,6 +216,9 @@ export function VoiceRecorderInner() {
           ].join(" ")}
           maxLength={500}
         />
+        {isRecording && activeField === "title" && (
+          <RecordingCountdown secondsLeft={secondsLeft} maxSeconds={maxSeconds} />
+        )}
         {isTranscribing && activeField === "title" && <TranscribingIndicator />}
       </div>
 
@@ -315,6 +318,9 @@ export function VoiceRecorderInner() {
           ].join(" ")}
           maxLength={2000}
         />
+        {isRecording && activeField === "description" && (
+          <RecordingCountdown secondsLeft={secondsLeft} maxSeconds={maxSeconds} />
+        )}
         {isTranscribing && activeField === "description" && <TranscribingIndicator />}
       </div>
 
@@ -378,6 +384,55 @@ function TranscribingIndicator() {
       <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#7b96fa]" />
       Transcribing with Google Speech-to-Text…
     </p>
+  );
+}
+
+/**
+ * Client-side recording countdown. Shows a shrinking bar plus the remaining
+ * seconds so the user knows roughly how long they have left to speak.
+ * Turns amber, then red, as time runs low. Sized for comfortable mobile use.
+ */
+function RecordingCountdown({
+  secondsLeft,
+  maxSeconds,
+}: {
+  secondsLeft: number;
+  maxSeconds: number;
+}) {
+  const pct = Math.max(0, Math.min(100, (secondsLeft / maxSeconds) * 100));
+  const display = Math.ceil(secondsLeft);
+  const isLow = secondsLeft <= 10;
+  const isCritical = secondsLeft <= 5;
+
+  const barColor = isCritical
+    ? "bg-red-500"
+    : isLow
+      ? "bg-amber-400"
+      : "bg-[#4f6ef7]";
+  const textColor = isCritical
+    ? "text-red-400"
+    : isLow
+      ? "text-amber-300"
+      : "text-white/60";
+
+  return (
+    <div className="mt-1.5 flex items-center gap-2.5" aria-live="polite">
+      {/* Shrinking progress bar */}
+      <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
+        <div
+          className={`h-full rounded-full transition-[width] duration-100 ease-linear ${barColor}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      {/* Remaining seconds */}
+      <span
+        className={`min-w-[3.25rem] shrink-0 text-right font-mono text-xs tabular-nums ${textColor} ${
+          isCritical ? "animate-pulse" : ""
+        }`}
+      >
+        {display}s left
+      </span>
+    </div>
   );
 }
 

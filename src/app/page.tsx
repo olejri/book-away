@@ -27,7 +27,7 @@ export default async function HomePage() {
       ) : (
         <div className="flex w-full max-w-xs flex-col gap-4">
           <div className="flex flex-col gap-2 rounded-xl border border-white/10 bg-white/5 p-4 text-left text-sm text-white/60">
-            <p>Sign in with Discord or Slack</p>
+            <p>Sign in with Discord, Slack or Google</p>
             <p>Save your destination email addresses</p>
             <p>Speak a draft idea — done in seconds</p>
           </div>

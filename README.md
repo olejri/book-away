@@ -11,6 +11,6 @@ VoiceDraft lets you record your voice, transcribe it, and send a draft as an ema
 - 🌙 Dark mode, mobile-friendly UI
 
 ### Getting Started
-1. Sign in with Discord or Slack
+1. Sign in with Discord, Slack or Google
 2. Add one or more destination email addresses in **Settings**
 3. Go to **Dashboard**, record your voice, review the draft, and send

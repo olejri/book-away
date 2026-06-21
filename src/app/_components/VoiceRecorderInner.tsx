@@ -1,8 +1,9 @@
 ﻿"use client";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
 import { api } from "~/trpc/react";
 import { CardPreview } from "./CardPreview";
+import { compressImage, type CompressedImage } from "./compressImage";
 import { normalizeVoiceInput } from "./parseCardText";
 import { useAudioRecorder } from "./useAudioRecorder";
 
@@ -23,6 +24,10 @@ export function VoiceRecorderInner() {
   const [description, setDescription] = useState("");
   const [memberInput, setMemberInput] = useState("");
   const [activeField, setActiveField] = useState<ActiveField>(null);
+  const [attachment, setAttachment] = useState<CompressedImage | null>(null);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const [selectedBoardId, setSelectedBoardId] = useState<string>(() => {
     if (typeof window === "undefined") return "";
     return localStorage.getItem(BOARD_STORAGE_KEY) ?? "";
@@ -86,6 +91,7 @@ export function VoiceRecorderInner() {
     onSuccess: () => {
       toast.success("VoiceDraft sent! 🎉");
       setTitle(""); setDescription(""); setMemberInput("");
+      clearAttachment();
       setActiveField(null); reset();
     },
     onError: (err) => toast.error(err.message),
@@ -112,10 +118,89 @@ export function VoiceRecorderInner() {
     setMemberInput("");
   };
 
+  const clearAttachment = useCallback(() => {
+    setAttachment((prev) => {
+      if (prev) URL.revokeObjectURL(prev.previewUrl);
+      return null;
+    });
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+  }, []);
+
+  // Revoke the preview object URL if the component unmounts mid-draft.
+  useEffect(() => {
+    return () => {
+      if (attachment) URL.revokeObjectURL(attachment.previewUrl);
+    };
+  }, [attachment]);
+
+  const handlePickImage = useCallback(
+    async (file: File | undefined) => {
+      if (!file) return;
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please choose an image file.");
+        return;
+      }
+      setIsProcessingImage(true);
+      try {
+        const compressed = await compressImage(file);
+        setAttachment((prev) => {
+          if (prev) URL.revokeObjectURL(prev.previewUrl);
+          return compressed;
+        });
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Could not process the image.",
+        );
+      } finally {
+        setIsProcessingImage(false);
+        // Allow re-selecting the same file again later.
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        if (cameraInputRef.current) cameraInputRef.current.value = "";
+      }
+    },
+    [],
+  );
+
+  // Let users paste a screenshot straight from the clipboard (desktop & many
+  // mobile keyboards). We grab the first image item we find.
+  useEffect(() => {
+    const onPaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.kind === "file" && item.type.startsWith("image/")) {
+          const file = item.getAsFile();
+          if (file) {
+            e.preventDefault();
+            void handlePickImage(file);
+            toast.info("Screenshot pasted 📋");
+          }
+          return;
+        }
+      }
+    };
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [handlePickImage]);
+
   const handleSend = () => {
     if (!title.trim()) { toast.warning("Please add a title first."); return; }
     if (!selectedBoardId) { toast.warning("Please select a destination first."); return; }
-    createCard.mutate({ boardEmailId: selectedBoardId, title: title.trim(), description: description.trim() || undefined });
+    createCard.mutate({
+      boardEmailId: selectedBoardId,
+      title: title.trim(),
+      description: description.trim() || undefined,
+      attachments: attachment
+        ? [
+            {
+              filename: attachment.filename,
+              contentType: attachment.contentType,
+              dataBase64: attachment.dataBase64,
+            },
+          ]
+        : undefined,
+    });
   };
 
   const isRecording = recorderState === "recording";
@@ -324,14 +409,25 @@ export function VoiceRecorderInner() {
         {isTranscribing && activeField === "description" && <TranscribingIndicator />}
       </div>
 
+      {/* Attachment */}
+      <AttachmentPicker
+        attachment={attachment}
+        isProcessing={isProcessingImage}
+        disabled={isBusy}
+        fileInputRef={fileInputRef}
+        cameraInputRef={cameraInputRef}
+        onPick={handlePickImage}
+        onRemove={clearAttachment}
+      />
+
       {/* Live preview */}
       <CardPreview title={title} description={description} />
 
       {/* Actions */}
       <div className="flex gap-3">
         <button
-          onClick={() => { setTitle(""); setDescription(""); setMemberInput(""); setActiveField(null); reset(); }}
-          disabled={(!title && !description) || isBusy}
+          onClick={() => { setTitle(""); setDescription(""); setMemberInput(""); clearAttachment(); setActiveField(null); reset(); }}
+          disabled={(!title && !description && !attachment) || isBusy}
           className="flex-1 rounded-xl border border-white/10 py-3 text-sm text-white/60 hover:bg-white/5 disabled:opacity-40 transition-colors"
         >
           Clear
@@ -499,3 +595,131 @@ function DashboardLoading() {
   );
 }
 
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${Math.round(kb)} KB`;
+  return `${(kb / 1024).toFixed(1)} MB`;
+}
+
+function AttachmentPicker({
+  attachment,
+  isProcessing,
+  disabled,
+  fileInputRef,
+  cameraInputRef,
+  onPick,
+  onRemove,
+}: {
+  attachment: CompressedImage | null;
+  isProcessing: boolean;
+  disabled: boolean;
+  fileInputRef: React.RefObject<HTMLInputElement>;
+  cameraInputRef: React.RefObject<HTMLInputElement>;
+  onPick: (file: File | undefined) => void;
+  onRemove: () => void;
+}) {
+  const busy = disabled || isProcessing;
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center gap-2">
+        <label className="text-xs font-medium text-white/60">
+          Attachment <span className="text-white/30">(optional)</span>
+        </label>
+        <span className="text-[11px] text-white/30">
+          adds a screenshot to the card
+        </span>
+      </div>
+
+      {/* Camera capture (mobile opens the camera directly). */}
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => onPick(e.target.files?.[0])}
+      />
+      {/* Plain picker — photo library on mobile, file dialog on desktop. */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => onPick(e.target.files?.[0])}
+      />
+
+      {attachment ? (
+        <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-2.5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={attachment.previewUrl}
+            alt="Attachment preview"
+            className="h-14 w-14 shrink-0 rounded-lg object-cover ring-1 ring-white/10"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-white">
+              {attachment.filename}
+            </p>
+            <p className="text-xs text-white/40">
+              {formatBytes(attachment.sizeBytes)} · ready to send
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={busy}
+              className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-white/60 hover:bg-white/10 hover:text-white/90 disabled:opacity-40 transition-colors"
+            >
+              Replace
+            </button>
+            <button
+              type="button"
+              onClick={onRemove}
+              disabled={disabled}
+              aria-label="Remove attachment"
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-white/50 hover:bg-red-500/15 hover:text-red-400 disabled:opacity-40 transition-colors"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      ) : isProcessing ? (
+        <div className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-4 text-sm text-white/50">
+          <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-[#7b96fa]" />
+          Optimizing image…
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2 rounded-xl border border-dashed border-white/15 bg-white/[0.02] p-3">
+          <div className="grid grid-cols-2 gap-2">
+            {/* Take a photo — uses the camera on mobile. */}
+            <button
+              type="button"
+              onClick={() => cameraInputRef.current?.click()}
+              disabled={busy}
+              className="flex flex-col items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-3 text-sm transition-all hover:border-[#4f6ef7]/50 hover:bg-[#4f6ef7]/[0.08] hover:text-white active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <span className="text-xl leading-none">📷</span>
+              <span className="font-medium text-white/80">Take photo</span>
+            </button>
+            {/* Upload / choose from library. */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={busy}
+              className="flex flex-col items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-3 text-sm transition-all hover:border-[#4f6ef7]/50 hover:bg-[#4f6ef7]/[0.08] hover:text-white active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <span className="text-xl leading-none">🖼️</span>
+              <span className="font-medium text-white/80">Upload</span>
+            </button>
+          </div>
+          <p className="text-center text-[11px] text-white/30">
+            …or <span className="text-white/45">paste a screenshot</span> (Ctrl/⌘+V)
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}

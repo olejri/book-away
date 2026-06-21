@@ -12,7 +12,16 @@ import { Navbar } from "./_components/Navbar";
 export const metadata: Metadata = {
   title: "VoiceDraft",
   description: "Speak your idea. Send it anywhere.",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+  manifest: "/manifest.webmanifest",
+  icons: [
+    { rel: "icon", url: "/favicon.ico" },
+    { rel: "apple-touch-icon", url: "/icons/apple-touch-icon.png" },
+  ],
+  appleWebApp: {
+    capable: true,
+    title: "VoiceDraft",
+    statusBarStyle: "black-translucent",
+  },
 };
 
 export const viewport: Viewport = {
@@ -20,6 +29,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  themeColor: "#4f6ef7",
 };
 
 export default function RootLayout({

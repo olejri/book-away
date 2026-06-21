@@ -28,9 +28,12 @@ export function VoiceRecorderInner() {
     return localStorage.getItem(BOARD_STORAGE_KEY) ?? "";
   });
 
-  const { data: boards = [] } = api.settings.getBoardEmails.useQuery();
-  const { data: userLabels = [] } = api.settings.getLabels.useQuery();
-  const { data: savedMembers = [] } = api.settings.getMembers.useQuery();
+  const { data: boards = [], isLoading: boardsLoading } =
+    api.settings.getBoardEmails.useQuery();
+  const { data: userLabels = [], isLoading: labelsLoading } =
+    api.settings.getLabels.useQuery();
+  const { data: savedMembers = [], isLoading: membersLoading } =
+    api.settings.getMembers.useQuery();
 
   // Auto-select first board if stored selection no longer exists or nothing is stored
   useEffect(() => {
@@ -118,6 +121,15 @@ export function VoiceRecorderInner() {
   const isRecording = recorderState === "recording";
   const isTranscribing = recorderState === "transcribing";
   const isBusy = isRecording || isTranscribing;
+
+  // Wait for all dashboard data before rendering the form, to avoid the
+  // layout "blinking" as empty-state placeholders swap for real content.
+  const isDashboardLoading =
+    boardsLoading || labelsLoading || membersLoading || configLoading;
+
+  if (isDashboardLoading) {
+    return <DashboardLoading />;
+  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -366,6 +378,69 @@ function TranscribingIndicator() {
       <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#7b96fa]" />
       Transcribing with Google Speech-to-Text…
     </p>
+  );
+}
+
+const LOADING_MESSAGES = [
+  "Fetching your dashboard…",
+  "Let's get ready to voice some drafts!",
+  "Tuning the microphone…",
+  "Loading your boards, labels & members…",
+];
+
+function DashboardLoading() {
+  const [messageIndex, setMessageIndex] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setMessageIndex((i) => (i + 1) % LOADING_MESSAGES.length);
+    }, 2000);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div className="flex flex-col items-center justify-center gap-6 py-16">
+      {/* Pulsing mic orb with orbiting ring */}
+      <div className="relative flex h-28 w-28 items-center justify-center">
+        <span className="absolute inset-0 animate-ping rounded-full bg-[#4f6ef7]/20" />
+        <span className="absolute inset-2 animate-pulse rounded-full bg-[#4f6ef7]/10" />
+        <span
+          className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-[#4f6ef7] border-r-[#7b96fa]/40"
+          style={{ animationDuration: "1.2s" }}
+        />
+        <span className="text-4xl">🎙️</span>
+      </div>
+
+      {/* Rotating message */}
+      <p
+        key={messageIndex}
+        className="animate-pulse text-center text-sm font-medium text-white/70"
+      >
+        {LOADING_MESSAGES[messageIndex]}
+      </p>
+
+      {/* Equalizer-style bars */}
+      <div className="flex items-end gap-1">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <span
+            key={i}
+            className="w-1.5 rounded-full bg-[#4f6ef7]"
+            style={{
+              height: "1rem",
+              animation: "voicebars 1s ease-in-out infinite",
+              animationDelay: `${i * 0.12}s`,
+            }}
+          />
+        ))}
+      </div>
+
+      <style>{`
+        @keyframes voicebars {
+          0%, 100% { transform: scaleY(0.4); opacity: 0.5; }
+          50% { transform: scaleY(1.4); opacity: 1; }
+        }
+      `}</style>
+    </div>
   );
 }
 

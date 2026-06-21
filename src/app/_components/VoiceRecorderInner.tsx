@@ -26,8 +26,12 @@ export function VoiceRecorderInner() {
   const [activeField, setActiveField] = useState<ActiveField>(null);
   const [attachment, setAttachment] = useState<CompressedImage | null>(null);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const [justSent, setJustSent] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  // Guards against accidental duplicate sends on flaky mobile connections.
+  const lastSendRef = useRef<{ fingerprint: string; at: number } | null>(null);
+  const pendingFingerprintRef = useRef<string>("");
   const [selectedBoardId, setSelectedBoardId] = useState<string>(() => {
     if (typeof window === "undefined") return "";
     return localStorage.getItem(BOARD_STORAGE_KEY) ?? "";
@@ -88,8 +92,17 @@ export function VoiceRecorderInner() {
   });
 
   const createCard = api.trello.createCard.useMutation({
-    onSuccess: () => {
-      toast.success("VoiceDraft sent! 🎉");
+    onSuccess: (res) => {
+      // Remember this exact draft so a quick second tap doesn't duplicate it.
+      lastSendRef.current = {
+        fingerprint: pendingFingerprintRef.current,
+        at: Date.now(),
+      };
+      toast.success(
+        res.messageId ? "VoiceDraft sent — card queued ✓ 🎉" : "VoiceDraft sent! 🎉",
+      );
+      setJustSent(true);
+      setTimeout(() => setJustSent(false), 2500);
       setTitle(""); setDescription(""); setMemberInput("");
       clearAttachment();
       setActiveField(null); reset();
@@ -184,9 +197,44 @@ export function VoiceRecorderInner() {
     return () => window.removeEventListener("paste", onPaste);
   }, [handlePickImage]);
 
+  // Remove a mis-heard `#label` / `@member` token straight from the title.
+  const removeLabel = useCallback((label: string) => {
+    const token = `#${label.replace(/ /g, "_")}`;
+    setTitle((prev) =>
+      prev
+        .split(/\s+/)
+        .filter((w) => w.toLowerCase() !== token.toLowerCase())
+        .join(" ")
+        .trim(),
+    );
+  }, []);
+
+  const removeMember = useCallback((member: string) => {
+    const token = `@${member}`;
+    setTitle((prev) =>
+      prev
+        .split(/\s+/)
+        .filter((w) => w.toLowerCase() !== token.toLowerCase())
+        .join(" ")
+        .trim(),
+    );
+  }, []);
+
   const handleSend = () => {
     if (!title.trim()) { toast.warning("Please add a title first."); return; }
     if (!selectedBoardId) { toast.warning("Please select a destination first."); return; }
+
+    // Double-send guard: if the identical draft was just sent (<30s ago),
+    // ask for an explicit second tap before creating a duplicate card.
+    const fingerprint = `${selectedBoardId}|${title.trim()}|${description.trim()}`;
+    const last = lastSendRef.current;
+    if (last && last.fingerprint === fingerprint && Date.now() - last.at < 30_000) {
+      lastSendRef.current = null; // next tap goes through
+      toast.warning("You just sent this draft. Tap Send again to send a duplicate.");
+      return;
+    }
+
+    pendingFingerprintRef.current = fingerprint;
     createCard.mutate({
       boardEmailId: selectedBoardId,
       title: title.trim(),
@@ -421,7 +469,12 @@ export function VoiceRecorderInner() {
       />
 
       {/* Live preview */}
-      <CardPreview title={title} description={description} />
+      <CardPreview
+        title={title}
+        description={description}
+        onRemoveLabel={removeLabel}
+        onRemoveMember={removeMember}
+      />
 
       {/* Actions */}
       <div className="flex gap-3">
@@ -435,9 +488,18 @@ export function VoiceRecorderInner() {
         <button
           onClick={handleSend}
           disabled={!title.trim() || isBusy || createCard.isPending}
-          className="flex-1 rounded-xl bg-[#4f6ef7] py-3 text-sm font-semibold text-white hover:bg-[#3d5ce0] disabled:opacity-40 transition-colors"
+          className={[
+            "flex-1 rounded-xl py-3 text-sm font-semibold text-white transition-colors disabled:opacity-40",
+            justSent
+              ? "bg-emerald-500 hover:bg-emerald-500"
+              : "bg-[#4f6ef7] hover:bg-[#3d5ce0]",
+          ].join(" ")}
         >
-          {createCard.isPending ? "Sending…" : "Send VoiceDraft"}
+          {createCard.isPending
+            ? "Sending…"
+            : justSent
+              ? "Sent ✓"
+              : "Send VoiceDraft"}
         </button>
       </div>
     </div>

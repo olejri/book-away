@@ -55,7 +55,7 @@ export const trelloRouter = createTRPCRouter({
         }
       }
 
-      await sendEmail({
+      const result = await sendEmail({
         to: board.email,
         subject: input.title,
         body: input.description ?? input.title,
@@ -65,6 +65,6 @@ export const trelloRouter = createTRPCRouter({
         })),
       });
 
-      return { success: true };
+      return { success: true, messageId: result?.id ?? null };
     }),
 });

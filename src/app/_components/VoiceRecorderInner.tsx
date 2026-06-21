@@ -614,8 +614,8 @@ function AttachmentPicker({
   attachment: CompressedImage | null;
   isProcessing: boolean;
   disabled: boolean;
-  fileInputRef: React.RefObject<HTMLInputElement>;
-  cameraInputRef: React.RefObject<HTMLInputElement>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  cameraInputRef: React.RefObject<HTMLInputElement | null>;
   onPick: (file: File | undefined) => void;
   onRemove: () => void;
 }) {

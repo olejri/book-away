@@ -193,3 +193,26 @@ export const userMembersRelations = relations(userMembers, ({ one }) => ({
   user: one(users, { fields: [userMembers.userId], references: [users.id] }),
 }));
 
+// ─── Fasting sessions (Personal Trainer) ──────────────────────────────────────
+
+export const fastingSessions = createTable("fasting_session", {
+  id: varchar("id", { length: 255 })
+    .notNull()
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: varchar("user_id", { length: 255 })
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+  goalHours: integer("goal_hours").notNull().default(16),
+  endedAt: timestamp("ended_at", { withTimezone: true }),
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+});
+
+export const fastingSessionsRelations = relations(fastingSessions, ({ one }) => ({
+  user: one(users, { fields: [fastingSessions.userId], references: [users.id] }),
+}));
+

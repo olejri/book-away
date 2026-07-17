@@ -18,6 +18,9 @@ export async function Navbar() {
               <Link href="/dashboard" className="text-sm text-white/70 hover:text-white transition-colors">
                 Dashboard
               </Link>
+              <Link href="/trainer" className="text-sm text-white/70 hover:text-white transition-colors">
+                Trainer
+              </Link>
               <Link href="/settings" className="text-sm text-white/70 hover:text-white transition-colors">
                 Settings
               </Link>

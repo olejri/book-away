@@ -1,24 +1,11 @@
-"use client";
+﻿"use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
+import { api } from "~/trpc/react";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-interface ActiveFast {
-  id: string;
-  startedAt: string; // ISO string
-  goalHours: number;
-}
-
-interface CompletedFast {
-  id: string;
-  startedAt: string;
-  endedAt: string;
-  goalHours: number;
-  secondsFasted: number;
-}
-
-// ─── Fasting phases data ───────────────────────────────────────────────────────
+// â”€â”€â”€ Fasting phases data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const PHASES = [
   {
@@ -26,9 +13,9 @@ const PHASES = [
     minHours: 0,
     maxHours: 4,
     name: "Fed State",
-    emoji: "🍽️",
+    emoji: "ðŸ½ï¸",
     color: "#94a3b8",
-    badge: "0 – 4 h",
+    badge: "0 â€“ 4 h",
     summary:
       "Your body is still burning circulating blood glucose from your last meal. Insulin is active and fat burning is minimal.",
     bullets: [
@@ -44,9 +31,9 @@ const PHASES = [
     minHours: 4,
     maxHours: 12,
     name: "Glycogen Depletion",
-    emoji: "🔋",
+    emoji: "ðŸ”‹",
     color: "#f59e0b",
-    badge: "4 – 12 h",
+    badge: "4 â€“ 12 h",
     summary:
       "Circulating glucose is exhausted. Your liver is tapping into its stored glycogen. Hunger pangs begin to intensify.",
     bullets: [
@@ -62,9 +49,9 @@ const PHASES = [
     minHours: 12,
     maxHours: 18,
     name: "Early Ketosis",
-    emoji: "🔥",
+    emoji: "ðŸ”¥",
     color: "#f97316",
-    badge: "12 – 18 h",
+    badge: "12 â€“ 18 h",
     summary:
       "Glycogen reserves are nearly gone. Your liver begins converting fatty acids to ketones. Fat burning is accelerating.",
     bullets: [
@@ -80,9 +67,9 @@ const PHASES = [
     minHours: 18,
     maxHours: 24,
     name: "Ketosis",
-    emoji: "⚡",
+    emoji: "âš¡",
     color: "#eab308",
-    badge: "18 – 24 h",
+    badge: "18 â€“ 24 h",
     summary:
       "Your brain and body are running on ketones. Insulin is at its lowest. Fat burning is in full swing.",
     bullets: [
@@ -91,18 +78,18 @@ const PHASES = [
       "'Keto flu' possible (headache, fatigue)",
       "Growth hormone starting to rise",
     ],
-    tip: "Mild headaches are normal — salt water or electrolyte drinks help significantly.",
+    tip: "Mild headaches are normal â€” salt water or electrolyte drinks help significantly.",
   },
   {
     id: 4,
     minHours: 24,
     maxHours: 48,
     name: "Deep Ketosis + Autophagy",
-    emoji: "🧬",
+    emoji: "ðŸ§¬",
     color: "#22c55e",
-    badge: "24 – 48 h",
+    badge: "24 â€“ 48 h",
     summary:
-      "Autophagy is now active — your cells are breaking down and recycling damaged proteins and organelles. This is where powerful metabolic healing begins.",
+      "Autophagy is now active â€” your cells are breaking down and recycling damaged proteins and organelles. This is where powerful metabolic healing begins.",
     bullets: [
       "Autophagy (cellular cleanup) kicks in strongly",
       "Growth hormone surges significantly",
@@ -116,16 +103,16 @@ const PHASES = [
     minHours: 48,
     maxHours: 72,
     name: "Peak Autophagy",
-    emoji: "🛡️",
+    emoji: "ðŸ›¡ï¸",
     color: "#6366f1",
-    badge: "48 – 72 h",
+    badge: "48 â€“ 72 h",
     summary:
       "Autophagy and ketosis are both at their peak. Your body is focused on deep cellular repair and immune regeneration.",
     bullets: [
-      "Maximum autophagy — damaged proteins cleared",
+      "Maximum autophagy â€” damaged proteins cleared",
       "White blood cell production increases",
       "Systemic inflammation decreases",
-      "BDNF (brain growth factor) elevated — better focus",
+      "BDNF (brain growth factor) elevated â€” better focus",
     ],
     tip: "Plan your refeeding carefully. Start with bone broth or light soups before solid meals.",
   },
@@ -134,7 +121,7 @@ const PHASES = [
     minHours: 72,
     maxHours: Infinity,
     name: "Metabolic Reset",
-    emoji: "✨",
+    emoji: "âœ¨",
     color: "#a855f7",
     badge: "72 h+",
     summary:
@@ -145,11 +132,11 @@ const PHASES = [
       "Profound insulin sensitivity improvements",
       "BDNF and cognitive benefits at maximum",
     ],
-    tip: "Break extended fasts very gently — small amounts of easily digestible food first.",
+    tip: "Break extended fasts very gently â€” small amounts of easily digestible food first.",
   },
 ];
 
-// ─── Utilities ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Utilities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function getPhase(hoursElapsed: number) {
   return (
@@ -173,8 +160,8 @@ function formatHoursVerbose(totalSeconds: number) {
   return `${h} hour${h !== 1 ? "s" : ""} and ${m} minute${m !== 1 ? "s" : ""}`;
 }
 
-function formatDateTime(iso: string) {
-  return new Date(iso).toLocaleString(undefined, {
+function formatDateTime(date: Date) {
+  return date.toLocaleString(undefined, {
     month: "short",
     day: "numeric",
     hour: "2-digit",
@@ -190,17 +177,12 @@ function toLocalDatetimeInputValue(date: Date) {
   );
 }
 
-const STORAGE_ACTIVE = "trainer_active_fast";
-const STORAGE_HISTORY = "trainer_fasting_history";
 const PRESET_GOALS = [12, 16, 18, 24, 36, 48, 72];
 
-// ─── Main component ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function FastingTrackerInner() {
-  const [mounted, setMounted] = useState(false);
-  const [activeFast, setActiveFast] = useState<ActiveFast | null>(null);
-  const [elapsed, setElapsed] = useState(0); // seconds
-  const [history, setHistory] = useState<CompletedFast[]>([]);
+  const [elapsed, setElapsed] = useState(0); // seconds, updated by client-side interval
 
   // Start-fast form state
   const [goalHours, setGoalHours] = useState(16);
@@ -214,70 +196,69 @@ export function FastingTrackerInner() {
   const [showHistory, setShowHistory] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
 
-  // Hydrate from localStorage
+  // Default start-time input to "now" on mount
   useEffect(() => {
-    setMounted(true);
-    try {
-      const raw = localStorage.getItem(STORAGE_ACTIVE);
-      if (raw) setActiveFast(JSON.parse(raw) as ActiveFast);
-    } catch {}
-    try {
-      const raw = localStorage.getItem(STORAGE_HISTORY);
-      if (raw) setHistory(JSON.parse(raw) as CompletedFast[]);
-    } catch {}
     const now = new Date();
     now.setSeconds(0, 0);
     setStartDateTime(toLocalDatetimeInputValue(now));
   }, []);
 
-  // Live clock — ticks every second while a fast is active
+  // â”€â”€ tRPC â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const utils = api.useUtils();
+
+  const { data: activeFast, isLoading: fastLoading } =
+    api.fasting.getActiveFast.useQuery(undefined, {
+      // Poll every 30 s so both devices stay roughly in sync
+      refetchInterval: 30_000,
+    });
+
+  const { data: history = [], isLoading: historyLoading } =
+    api.fasting.getHistory.useQuery({ limit: 30 });
+
+  const startMutation = api.fasting.startFast.useMutation({
+    onSuccess: async () => {
+      await utils.fasting.getActiveFast.invalidate();
+    },
+  });
+
+  const endMutation = api.fasting.endFast.useMutation({
+    onSuccess: async () => {
+      await utils.fasting.getActiveFast.invalidate();
+      await utils.fasting.getHistory.invalidate();
+    },
+  });
+
+  // â”€â”€ Live clock â€” ticks every second based on DB startedAt â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
-    if (!activeFast) return;
-    const tick = () => {
-      const start = new Date(activeFast.startedAt).getTime();
-      setElapsed(Math.max(0, Math.floor((Date.now() - start) / 1000)));
-    };
+    if (!activeFast?.startedAt) {
+      setElapsed(0);
+      return;
+    }
+    const startMs = activeFast.startedAt.getTime();
+    const tick = () => setElapsed(Math.max(0, Math.floor((Date.now() - startMs) / 1000)));
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [activeFast]);
+  }, [activeFast?.startedAt]);
 
-  const startFast = useCallback(() => {
+  // â”€â”€ Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  function startFast() {
     const startAt = useCustomTime
       ? new Date(startDateTime).toISOString()
       : new Date().toISOString();
     const effective = customGoal ? parseInt(customGoal, 10) : goalHours;
     if (!effective || isNaN(effective) || effective < 1) return;
-    const fast: ActiveFast = {
-      id: crypto.randomUUID(),
-      startedAt: startAt,
-      goalHours: effective,
-    };
-    localStorage.setItem(STORAGE_ACTIVE, JSON.stringify(fast));
-    setActiveFast(fast);
-    setConfirmEnd(false);
-  }, [useCustomTime, startDateTime, goalHours, customGoal]);
+    startMutation.mutate({ startedAt: startAt, goalHours: effective });
+  }
 
-  const endFast = useCallback(() => {
-    if (!activeFast) return;
-    const now = new Date().toISOString();
-    const completed: CompletedFast = {
-      id: activeFast.id,
-      startedAt: activeFast.startedAt,
-      endedAt: now,
-      goalHours: activeFast.goalHours,
-      secondsFasted: elapsed,
-    };
-    const newHistory = [completed, ...history].slice(0, 30);
-    localStorage.setItem(STORAGE_HISTORY, JSON.stringify(newHistory));
-    localStorage.removeItem(STORAGE_ACTIVE);
-    setHistory(newHistory);
-    setActiveFast(null);
-    setElapsed(0);
+  function endFast() {
+    if (!activeFast?.id) return;
+    endMutation.mutate({ id: activeFast.id });
     setConfirmEnd(false);
-  }, [activeFast, elapsed, history]);
+  }
 
-  if (!mounted) {
+  // â”€â”€ Loading state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  if (fastLoading) {
     return (
       <div className="flex flex-col gap-4">
         <div className="h-64 animate-pulse rounded-xl bg-white/5" />
@@ -286,7 +267,7 @@ export function FastingTrackerInner() {
     );
   }
 
-  // ── Derived values ────────────────────────────────────────────────────────
+  // â”€â”€ Derived values â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const hoursElapsed = elapsed / 3600;
   const phase = activeFast ? getPhase(hoursElapsed) : null;
   const effectiveGoal = customGoal ? parseInt(customGoal, 10) : goalHours;
@@ -295,12 +276,12 @@ export function FastingTrackerInner() {
     : 0;
   const goalReached = activeFast && hoursElapsed >= activeFast.goalHours;
   const goalEndTime = activeFast
-    ? new Date(new Date(activeFast.startedAt).getTime() + activeFast.goalHours * 3_600_000)
+    ? new Date(activeFast.startedAt.getTime() + activeFast.goalHours * 3_600_000)
     : null;
 
   return (
     <div className="flex flex-col gap-5">
-      {/* ── ACTIVE FAST ─────────────────────────────────────────────────── */}
+      {/* â”€â”€ ACTIVE FAST â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {activeFast && phase ? (
         <>
           {/* Live timer card */}
@@ -349,11 +330,11 @@ export function FastingTrackerInner() {
               <span>0h</span>
               {goalReached ? (
                 <span className="font-semibold" style={{ color: phase.color }}>
-                  🎉 Goal reached!
+                  ðŸŽ‰ Goal reached!
                 </span>
               ) : (
                 <span>
-                  Goal: {activeFast.goalHours}h (ends{" "}
+                  Goal: {activeFast.goalHours}h â€” ends{" "}
                   {goalEndTime?.toLocaleTimeString(undefined, {
                     hour: "2-digit",
                     minute: "2-digit",
@@ -363,13 +344,11 @@ export function FastingTrackerInner() {
                     month: "short",
                     day: "numeric",
                   })}
-                  )
                 </span>
               )}
               <span>{activeFast.goalHours}h</span>
             </div>
 
-            {/* Started at */}
             <p className="mt-3 text-center text-xs text-white/30">
               Started {formatDateTime(activeFast.startedAt)}
             </p>
@@ -380,9 +359,10 @@ export function FastingTrackerInner() {
                 <>
                   <button
                     onClick={endFast}
-                    className="rounded-lg bg-red-500/80 px-5 py-2 text-sm font-semibold text-white transition hover:bg-red-500"
+                    disabled={endMutation.isPending}
+                    className="rounded-lg bg-red-500/80 px-5 py-2 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
                   >
-                    Yes, end fast
+                    {endMutation.isPending ? "Endingâ€¦" : "Yes, end fast"}
                   </button>
                   <button
                     onClick={() => setConfirmEnd(false)}
@@ -414,7 +394,7 @@ export function FastingTrackerInner() {
                   className="text-xs font-semibold uppercase tracking-widest"
                   style={{ color: phase.color }}
                 >
-                  Phase {phase.id + 1} · {phase.badge}
+                  Phase {phase.id + 1} Â· {phase.badge}
                 </p>
                 <h3 className="text-base font-bold">{phase.name}</h3>
               </div>
@@ -425,14 +405,14 @@ export function FastingTrackerInner() {
               onClick={() => setShowPhaseDetails((v) => !v)}
               className="mb-3 text-xs text-white/40 transition hover:text-white/70"
             >
-              {showPhaseDetails ? "▲ Hide details" : "▼ Show details"}
+              {showPhaseDetails ? "â–² Hide details" : "â–¼ Show details"}
             </button>
 
             {showPhaseDetails && (
               <ul className="mb-3 space-y-1.5">
                 {phase.bullets.map((b, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-white/60">
-                    <span style={{ color: phase.color }}>•</span>
+                    <span style={{ color: phase.color }}>â€¢</span>
                     {b}
                   </li>
                 ))}
@@ -444,7 +424,7 @@ export function FastingTrackerInner() {
               style={{ background: `${phase.color}15`, borderLeft: `3px solid ${phase.color}` }}
             >
               <span className="mr-1 font-semibold" style={{ color: phase.color }}>
-                💡 Trainer tip:
+                ðŸ’¡ Trainer tip:
               </span>
               {phase.tip}
             </div>
@@ -457,7 +437,7 @@ export function FastingTrackerInner() {
               className="flex w-full items-center justify-between text-sm font-semibold text-white/70 hover:text-white"
             >
               <span>Hour-by-hour overview</span>
-              <span>{showAllPhases ? "▲" : "▼"}</span>
+              <span>{showAllPhases ? "â–²" : "â–¼"}</span>
             </button>
 
             {showAllPhases && (
@@ -474,12 +454,9 @@ export function FastingTrackerInner() {
                       style={isActive ? { borderLeft: `3px solid ${p.color}` } : {}}
                     >
                       <span className="mt-0.5 text-lg">{p.emoji}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span
-                            className="text-xs font-semibold"
-                            style={{ color: p.color }}
-                          >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xs font-semibold" style={{ color: p.color }}>
                             {p.badge}
                           </span>
                           <span className="text-sm font-medium">{p.name}</span>
@@ -492,7 +469,7 @@ export function FastingTrackerInner() {
                             </span>
                           )}
                           {isPast && (
-                            <span className="text-xs text-white/30">✓ completed</span>
+                            <span className="text-xs text-white/30">âœ“ completed</span>
                           )}
                         </div>
                         <p className="mt-0.5 text-xs text-white/50">{p.summary}</p>
@@ -505,7 +482,7 @@ export function FastingTrackerInner() {
           </div>
         </>
       ) : (
-        /* ── START FAST FORM ───────────────────────────────────────────── */
+        /* â”€â”€ START FAST FORM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         <div className="rounded-xl border border-white/10 bg-white/5 p-6">
           <h2 className="mb-1 text-lg font-semibold">Start a Fast</h2>
           <p className="mb-5 text-sm text-white/50">
@@ -581,7 +558,7 @@ export function FastingTrackerInner() {
           {effectiveGoal >= 1 && !isNaN(effectiveGoal) && (
             <div className="mb-5 rounded-lg border border-white/10 bg-white/5 p-3">
               <p className="mb-2 text-xs font-medium text-white/40">
-                Phases you'll go through:
+                Phases you&apos;ll go through:
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {PHASES.filter((p) => p.minHours < effectiveGoal).map((p) => (
@@ -597,32 +574,40 @@ export function FastingTrackerInner() {
             </div>
           )}
 
+          {startMutation.error && (
+            <p className="mb-3 text-sm text-red-400">
+              Failed to start fast. Please try again.
+            </p>
+          )}
+
           <button
             onClick={startFast}
-            disabled={!effectiveGoal || isNaN(effectiveGoal) || effectiveGoal < 1}
+            disabled={
+              startMutation.isPending ||
+              !effectiveGoal ||
+              isNaN(effectiveGoal) ||
+              effectiveGoal < 1
+            }
             className="w-full rounded-xl bg-[#4f6ef7] py-3 text-sm font-semibold text-white transition hover:bg-[#3d5ce0] disabled:opacity-40"
           >
-            🚀 Start {effectiveGoal}h Fast
+            {startMutation.isPending ? "Startingâ€¦" : `ðŸš€ Start ${effectiveGoal}h Fast`}
           </button>
         </div>
       )}
 
-      {/* ── FASTING SCIENCE CARD ─────────────────────────────────────────── */}
+      {/* â”€â”€ FASTING SCIENCE CARD (shown when no active fast) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {!activeFast && (
         <div className="rounded-xl border border-white/10 bg-white/5 p-5">
           <h3 className="mb-3 text-sm font-semibold text-white/80">
-            📖 What to expect — hour by hour
+            ðŸ“– What to expect â€” hour by hour
           </h3>
           <div className="space-y-3">
             {PHASES.filter((p) => p.minHours < 73).map((p) => (
               <div key={p.id} className="flex items-start gap-3">
                 <span className="mt-0.5 text-base">{p.emoji}</span>
                 <div>
-                  <span
-                    className="text-xs font-semibold"
-                    style={{ color: p.color }}
-                  >
-                    {p.badge} · {p.name}
+                  <span className="text-xs font-semibold" style={{ color: p.color }}>
+                    {p.badge} Â· {p.name}
                   </span>
                   <p className="text-xs text-white/50">{p.summary}</p>
                 </div>
@@ -632,58 +617,66 @@ export function FastingTrackerInner() {
         </div>
       )}
 
-      {/* ── HISTORY ──────────────────────────────────────────────────────── */}
-      {history.length > 0 && (
+      {/* â”€â”€ HISTORY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {!historyLoading && history.filter((h) => h.endedAt !== null).length > 0 && (
         <div className="rounded-xl border border-white/10 bg-white/5 p-5">
           <button
             onClick={() => setShowHistory((v) => !v)}
             className="flex w-full items-center justify-between text-sm font-semibold text-white/70 hover:text-white"
           >
-            <span>Past fasts ({history.length})</span>
-            <span>{showHistory ? "▲" : "▼"}</span>
+            <span>
+              Past fasts ({history.filter((h) => h.endedAt !== null).length})
+            </span>
+            <span>{showHistory ? "â–²" : "â–¼"}</span>
           </button>
 
           {showHistory && (
             <div className="mt-4 space-y-2">
-              {history.map((h) => {
-                const hrs = Math.floor(h.secondsFasted / 3600);
-                const mins = Math.floor((h.secondsFasted % 3600) / 60);
-                const reached = h.secondsFasted / 3600 >= h.goalHours;
-                const finalPhase = getPhase(h.secondsFasted / 3600);
-                return (
-                  <div
-                    key={h.id}
-                    className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2.5"
-                  >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold">
-                          {hrs}h {mins > 0 ? `${mins}m` : ""} fasted
-                        </span>
-                        {reached ? (
-                          <span className="text-xs text-green-400">✓ goal met</span>
-                        ) : (
-                          <span className="text-xs text-white/30">
-                            / {h.goalHours}h goal
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-white/40">
-                        {formatDateTime(h.startedAt)} → {formatDateTime(h.endedAt)}
-                      </p>
-                    </div>
-                    <span
-                      className="rounded-full px-2 py-0.5 text-xs font-medium"
-                      style={{
-                        background: `${finalPhase.color}20`,
-                        color: finalPhase.color,
-                      }}
+              {history
+                .filter((h) => h.endedAt !== null)
+                .map((h) => {
+                  const secondsFasted = h.endedAt
+                    ? Math.floor((h.endedAt.getTime() - h.startedAt.getTime()) / 1000)
+                    : 0;
+                  const hrs = Math.floor(secondsFasted / 3600);
+                  const mins = Math.floor((secondsFasted % 3600) / 60);
+                  const reached = secondsFasted / 3600 >= h.goalHours;
+                  const finalPhase = getPhase(secondsFasted / 3600);
+                  return (
+                    <div
+                      key={h.id}
+                      className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2.5"
                     >
-                      {finalPhase.emoji} {finalPhase.name}
-                    </span>
-                  </div>
-                );
-              })}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold">
+                            {hrs}h {mins > 0 ? `${mins}m` : ""} fasted
+                          </span>
+                          {reached ? (
+                            <span className="text-xs text-green-400">âœ“ goal met</span>
+                          ) : (
+                            <span className="text-xs text-white/30">
+                              / {h.goalHours}h goal
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-white/40">
+                          {formatDateTime(h.startedAt)} â†’{" "}
+                          {h.endedAt ? formatDateTime(h.endedAt) : "ongoing"}
+                        </p>
+                      </div>
+                      <span
+                        className="rounded-full px-2 py-0.5 text-xs font-medium"
+                        style={{
+                          background: `${finalPhase.color}20`,
+                          color: finalPhase.color,
+                        }}
+                      >
+                        {finalPhase.emoji} {finalPhase.name}
+                      </span>
+                    </div>
+                  );
+                })}
             </div>
           )}
         </div>

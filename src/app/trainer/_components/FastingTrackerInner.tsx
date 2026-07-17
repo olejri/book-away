@@ -1,11 +1,9 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { api } from "~/trpc/react";
 
-// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-// â”€â”€â”€ Fasting phases data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Fasting phases ─────────────────────────────────────────────────────────────
 
 const PHASES = [
   {
@@ -13,9 +11,9 @@ const PHASES = [
     minHours: 0,
     maxHours: 4,
     name: "Fed State",
-    emoji: "ðŸ½ï¸",
+    emoji: "🍽️",
     color: "#94a3b8",
-    badge: "0 â€“ 4 h",
+    badge: "0 – 4 h",
     summary:
       "Your body is still burning circulating blood glucose from your last meal. Insulin is active and fat burning is minimal.",
     bullets: [
@@ -31,9 +29,9 @@ const PHASES = [
     minHours: 4,
     maxHours: 12,
     name: "Glycogen Depletion",
-    emoji: "ðŸ”‹",
+    emoji: "🔋",
     color: "#f59e0b",
-    badge: "4 â€“ 12 h",
+    badge: "4 – 12 h",
     summary:
       "Circulating glucose is exhausted. Your liver is tapping into its stored glycogen. Hunger pangs begin to intensify.",
     bullets: [
@@ -49,9 +47,9 @@ const PHASES = [
     minHours: 12,
     maxHours: 18,
     name: "Early Ketosis",
-    emoji: "ðŸ”¥",
+    emoji: "🔥",
     color: "#f97316",
-    badge: "12 â€“ 18 h",
+    badge: "12 – 18 h",
     summary:
       "Glycogen reserves are nearly gone. Your liver begins converting fatty acids to ketones. Fat burning is accelerating.",
     bullets: [
@@ -67,9 +65,9 @@ const PHASES = [
     minHours: 18,
     maxHours: 24,
     name: "Ketosis",
-    emoji: "âš¡",
+    emoji: "⚡",
     color: "#eab308",
-    badge: "18 â€“ 24 h",
+    badge: "18 – 24 h",
     summary:
       "Your brain and body are running on ketones. Insulin is at its lowest. Fat burning is in full swing.",
     bullets: [
@@ -78,18 +76,18 @@ const PHASES = [
       "'Keto flu' possible (headache, fatigue)",
       "Growth hormone starting to rise",
     ],
-    tip: "Mild headaches are normal â€” salt water or electrolyte drinks help significantly.",
+    tip: "Mild headaches are normal — salt water or electrolyte drinks help significantly.",
   },
   {
     id: 4,
     minHours: 24,
     maxHours: 48,
     name: "Deep Ketosis + Autophagy",
-    emoji: "ðŸ§¬",
+    emoji: "🧬",
     color: "#22c55e",
-    badge: "24 â€“ 48 h",
+    badge: "24 – 48 h",
     summary:
-      "Autophagy is now active â€” your cells are breaking down and recycling damaged proteins and organelles. This is where powerful metabolic healing begins.",
+      "Autophagy is now active — your cells are breaking down and recycling damaged proteins and organelles. This is where powerful metabolic healing begins.",
     bullets: [
       "Autophagy (cellular cleanup) kicks in strongly",
       "Growth hormone surges significantly",
@@ -103,16 +101,16 @@ const PHASES = [
     minHours: 48,
     maxHours: 72,
     name: "Peak Autophagy",
-    emoji: "ðŸ›¡ï¸",
+    emoji: "🛡️",
     color: "#6366f1",
-    badge: "48 â€“ 72 h",
+    badge: "48 – 72 h",
     summary:
       "Autophagy and ketosis are both at their peak. Your body is focused on deep cellular repair and immune regeneration.",
     bullets: [
-      "Maximum autophagy â€” damaged proteins cleared",
+      "Maximum autophagy — damaged proteins cleared",
       "White blood cell production increases",
       "Systemic inflammation decreases",
-      "BDNF (brain growth factor) elevated â€” better focus",
+      "BDNF (brain growth factor) elevated — better focus",
     ],
     tip: "Plan your refeeding carefully. Start with bone broth or light soups before solid meals.",
   },
@@ -121,7 +119,7 @@ const PHASES = [
     minHours: 72,
     maxHours: Infinity,
     name: "Metabolic Reset",
-    emoji: "âœ¨",
+    emoji: "✨",
     color: "#a855f7",
     badge: "72 h+",
     summary:
@@ -132,11 +130,11 @@ const PHASES = [
       "Profound insulin sensitivity improvements",
       "BDNF and cognitive benefits at maximum",
     ],
-    tip: "Break extended fasts very gently â€” small amounts of easily digestible food first.",
+    tip: "Break extended fasts very gently — small amounts of easily digestible food first.",
   },
 ];
 
-// â”€â”€â”€ Utilities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Utilities ──────────────────────────────────────────────────────────────────
 
 function getPhase(hoursElapsed: number) {
   return (
@@ -179,10 +177,10 @@ function toLocalDatetimeInputValue(date: Date) {
 
 const PRESET_GOALS = [12, 16, 18, 24, 36, 48, 72];
 
-// â”€â”€â”€ Main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Component ──────────────────────────────────────────────────────────────────
 
 export function FastingTrackerInner() {
-  const [elapsed, setElapsed] = useState(0); // seconds, updated by client-side interval
+  const [elapsed, setElapsed] = useState(0);
 
   // Start-fast form state
   const [goalHours, setGoalHours] = useState(16);
@@ -196,19 +194,17 @@ export function FastingTrackerInner() {
   const [showHistory, setShowHistory] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
 
-  // Default start-time input to "now" on mount
   useEffect(() => {
     const now = new Date();
     now.setSeconds(0, 0);
     setStartDateTime(toLocalDatetimeInputValue(now));
   }, []);
 
-  // â”€â”€ tRPC â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── tRPC ────────────────────────────────────────────────────────────────
   const utils = api.useUtils();
 
   const { data: activeFast, isLoading: fastLoading } =
     api.fasting.getActiveFast.useQuery(undefined, {
-      // Poll every 30 s so both devices stay roughly in sync
       refetchInterval: 30_000,
     });
 
@@ -228,20 +224,21 @@ export function FastingTrackerInner() {
     },
   });
 
-  // â”€â”€ Live clock â€” ticks every second based on DB startedAt â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Live clock — ticks every second, driven by DB startedAt ─────────────
   useEffect(() => {
     if (!activeFast?.startedAt) {
       setElapsed(0);
       return;
     }
     const startMs = activeFast.startedAt.getTime();
-    const tick = () => setElapsed(Math.max(0, Math.floor((Date.now() - startMs) / 1000)));
+    const tick = () =>
+      setElapsed(Math.max(0, Math.floor((Date.now() - startMs) / 1000)));
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, [activeFast?.startedAt]);
 
-  // â”€â”€ Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Actions ──────────────────────────────────────────────────────────────
   function startFast() {
     const startAt = useCustomTime
       ? new Date(startDateTime).toISOString()
@@ -257,7 +254,7 @@ export function FastingTrackerInner() {
     setConfirmEnd(false);
   }
 
-  // â”€â”€ Loading state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Loading ───────────────────────────────────────────────────────────────
   if (fastLoading) {
     return (
       <div className="flex flex-col gap-4">
@@ -267,7 +264,7 @@ export function FastingTrackerInner() {
     );
   }
 
-  // â”€â”€ Derived values â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Derived values ────────────────────────────────────────────────────────
   const hoursElapsed = elapsed / 3600;
   const phase = activeFast ? getPhase(hoursElapsed) : null;
   const effectiveGoal = customGoal ? parseInt(customGoal, 10) : goalHours;
@@ -281,10 +278,10 @@ export function FastingTrackerInner() {
 
   return (
     <div className="flex flex-col gap-5">
-      {/* â”€â”€ ACTIVE FAST â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── ACTIVE FAST ───────────────────────────────────────────────────── */}
       {activeFast && phase ? (
         <>
-          {/* Live timer card */}
+          {/* Timer card */}
           <div
             className="rounded-xl border bg-white/5 p-6"
             style={{ borderColor: `${phase.color}40` }}
@@ -301,10 +298,13 @@ export function FastingTrackerInner() {
               </span>
             </div>
 
-            {/* Clock */}
+            {/* Live clock */}
             <div
               className="my-4 text-center font-mono text-6xl font-bold tabular-nums tracking-tight"
-              style={{ color: phase.color, textShadow: `0 0 40px ${phase.color}60` }}
+              style={{
+                color: phase.color,
+                textShadow: `0 0 40px ${phase.color}60`,
+              }}
             >
               {formatClock(elapsed)}
             </div>
@@ -330,11 +330,11 @@ export function FastingTrackerInner() {
               <span>0h</span>
               {goalReached ? (
                 <span className="font-semibold" style={{ color: phase.color }}>
-                  ðŸŽ‰ Goal reached!
+                  🎉 Goal reached!
                 </span>
               ) : (
                 <span>
-                  Goal: {activeFast.goalHours}h â€” ends{" "}
+                  Goal: {activeFast.goalHours}h — ends{" "}
                   {goalEndTime?.toLocaleTimeString(undefined, {
                     hour: "2-digit",
                     minute: "2-digit",
@@ -353,7 +353,7 @@ export function FastingTrackerInner() {
               Started {formatDateTime(activeFast.startedAt)}
             </p>
 
-            {/* End fast */}
+            {/* End fast controls */}
             <div className="mt-5 flex justify-center gap-3">
               {confirmEnd ? (
                 <>
@@ -362,7 +362,7 @@ export function FastingTrackerInner() {
                     disabled={endMutation.isPending}
                     className="rounded-lg bg-red-500/80 px-5 py-2 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
                   >
-                    {endMutation.isPending ? "Endingâ€¦" : "Yes, end fast"}
+                    {endMutation.isPending ? "Ending…" : "Yes, end fast"}
                   </button>
                   <button
                     onClick={() => setConfirmEnd(false)}
@@ -394,7 +394,7 @@ export function FastingTrackerInner() {
                   className="text-xs font-semibold uppercase tracking-widest"
                   style={{ color: phase.color }}
                 >
-                  Phase {phase.id + 1} Â· {phase.badge}
+                  Phase {phase.id + 1} · {phase.badge}
                 </p>
                 <h3 className="text-base font-bold">{phase.name}</h3>
               </div>
@@ -405,14 +405,14 @@ export function FastingTrackerInner() {
               onClick={() => setShowPhaseDetails((v) => !v)}
               className="mb-3 text-xs text-white/40 transition hover:text-white/70"
             >
-              {showPhaseDetails ? "â–² Hide details" : "â–¼ Show details"}
+              {showPhaseDetails ? "▲ Hide details" : "▼ Show details"}
             </button>
 
             {showPhaseDetails && (
               <ul className="mb-3 space-y-1.5">
                 {phase.bullets.map((b, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-white/60">
-                    <span style={{ color: phase.color }}>â€¢</span>
+                    <span style={{ color: phase.color }}>•</span>
                     {b}
                   </li>
                 ))}
@@ -421,23 +421,26 @@ export function FastingTrackerInner() {
 
             <div
               className="rounded-lg px-4 py-3 text-sm text-white/80"
-              style={{ background: `${phase.color}15`, borderLeft: `3px solid ${phase.color}` }}
+              style={{
+                background: `${phase.color}15`,
+                borderLeft: `3px solid ${phase.color}`,
+              }}
             >
               <span className="mr-1 font-semibold" style={{ color: phase.color }}>
-                ðŸ’¡ Trainer tip:
+                💡 Trainer tip:
               </span>
               {phase.tip}
             </div>
           </div>
 
-          {/* All phases overview */}
+          {/* All phases timeline */}
           <div className="rounded-xl border border-white/10 bg-white/5 p-5">
             <button
               onClick={() => setShowAllPhases((v) => !v)}
               className="flex w-full items-center justify-between text-sm font-semibold text-white/70 hover:text-white"
             >
               <span>Hour-by-hour overview</span>
-              <span>{showAllPhases ? "â–²" : "â–¼"}</span>
+              <span>{showAllPhases ? "▲" : "▼"}</span>
             </button>
 
             {showAllPhases && (
@@ -456,7 +459,10 @@ export function FastingTrackerInner() {
                       <span className="mt-0.5 text-lg">{p.emoji}</span>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-xs font-semibold" style={{ color: p.color }}>
+                          <span
+                            className="text-xs font-semibold"
+                            style={{ color: p.color }}
+                          >
                             {p.badge}
                           </span>
                           <span className="text-sm font-medium">{p.name}</span>
@@ -469,7 +475,7 @@ export function FastingTrackerInner() {
                             </span>
                           )}
                           {isPast && (
-                            <span className="text-xs text-white/30">âœ“ completed</span>
+                            <span className="text-xs text-white/30">✓ completed</span>
                           )}
                         </div>
                         <p className="mt-0.5 text-xs text-white/50">{p.summary}</p>
@@ -482,7 +488,7 @@ export function FastingTrackerInner() {
           </div>
         </>
       ) : (
-        /* â”€â”€ START FAST FORM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+        /* ── START FAST FORM ─────────────────────────────────────────────── */
         <div className="rounded-xl border border-white/10 bg-white/5 p-6">
           <h2 className="mb-1 text-lg font-semibold">Start a Fast</h2>
           <p className="mb-5 text-sm text-white/50">
@@ -511,6 +517,7 @@ export function FastingTrackerInner() {
               </button>
             ))}
           </div>
+
           <div className="mb-5 flex items-center gap-2">
             <input
               type="number"
@@ -529,7 +536,7 @@ export function FastingTrackerInner() {
             )}
           </div>
 
-          {/* Custom start time toggle */}
+          {/* Custom start time */}
           <label className="mb-3 flex cursor-pointer items-center gap-2">
             <input
               type="checkbox"
@@ -537,7 +544,9 @@ export function FastingTrackerInner() {
               onChange={(e) => setUseCustomTime(e.target.checked)}
               className="accent-[#4f6ef7]"
             />
-            <span className="text-sm text-white/70">I started fasting at a different time</span>
+            <span className="text-sm text-white/70">
+              I started fasting at a different time
+            </span>
           </label>
 
           {useCustomTime && (
@@ -590,24 +599,29 @@ export function FastingTrackerInner() {
             }
             className="w-full rounded-xl bg-[#4f6ef7] py-3 text-sm font-semibold text-white transition hover:bg-[#3d5ce0] disabled:opacity-40"
           >
-            {startMutation.isPending ? "Startingâ€¦" : `ðŸš€ Start ${effectiveGoal}h Fast`}
+            {startMutation.isPending
+              ? "Starting…"
+              : `🚀 Start ${effectiveGoal}h Fast`}
           </button>
         </div>
       )}
 
-      {/* â”€â”€ FASTING SCIENCE CARD (shown when no active fast) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── SCIENCE OVERVIEW (shown when no active fast) ──────────────────── */}
       {!activeFast && (
         <div className="rounded-xl border border-white/10 bg-white/5 p-5">
           <h3 className="mb-3 text-sm font-semibold text-white/80">
-            ðŸ“– What to expect â€” hour by hour
+            📖 What to expect — hour by hour
           </h3>
           <div className="space-y-3">
             {PHASES.filter((p) => p.minHours < 73).map((p) => (
               <div key={p.id} className="flex items-start gap-3">
                 <span className="mt-0.5 text-base">{p.emoji}</span>
                 <div>
-                  <span className="text-xs font-semibold" style={{ color: p.color }}>
-                    {p.badge} Â· {p.name}
+                  <span
+                    className="text-xs font-semibold"
+                    style={{ color: p.color }}
+                  >
+                    {p.badge} · {p.name}
                   </span>
                   <p className="text-xs text-white/50">{p.summary}</p>
                 </div>
@@ -617,7 +631,7 @@ export function FastingTrackerInner() {
         </div>
       )}
 
-      {/* â”€â”€ HISTORY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── HISTORY ───────────────────────────────────────────────────────── */}
       {!historyLoading && history.filter((h) => h.endedAt !== null).length > 0 && (
         <div className="rounded-xl border border-white/10 bg-white/5 p-5">
           <button
@@ -627,7 +641,7 @@ export function FastingTrackerInner() {
             <span>
               Past fasts ({history.filter((h) => h.endedAt !== null).length})
             </span>
-            <span>{showHistory ? "â–²" : "â–¼"}</span>
+            <span>{showHistory ? "▲" : "▼"}</span>
           </button>
 
           {showHistory && (
@@ -636,7 +650,9 @@ export function FastingTrackerInner() {
                 .filter((h) => h.endedAt !== null)
                 .map((h) => {
                   const secondsFasted = h.endedAt
-                    ? Math.floor((h.endedAt.getTime() - h.startedAt.getTime()) / 1000)
+                    ? Math.floor(
+                        (h.endedAt.getTime() - h.startedAt.getTime()) / 1000,
+                      )
                     : 0;
                   const hrs = Math.floor(secondsFasted / 3600);
                   const mins = Math.floor((secondsFasted % 3600) / 60);
@@ -653,7 +669,9 @@ export function FastingTrackerInner() {
                             {hrs}h {mins > 0 ? `${mins}m` : ""} fasted
                           </span>
                           {reached ? (
-                            <span className="text-xs text-green-400">âœ“ goal met</span>
+                            <span className="text-xs text-green-400">
+                              ✓ goal met
+                            </span>
                           ) : (
                             <span className="text-xs text-white/30">
                               / {h.goalHours}h goal
@@ -661,7 +679,7 @@ export function FastingTrackerInner() {
                           )}
                         </div>
                         <p className="text-xs text-white/40">
-                          {formatDateTime(h.startedAt)} â†’{" "}
+                          {formatDateTime(h.startedAt)} →{" "}
                           {h.endedAt ? formatDateTime(h.endedAt) : "ongoing"}
                         </p>
                       </div>
